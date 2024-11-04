@@ -6,6 +6,7 @@ import oauth2
 import tables
 import mongodb
 import sqlite"""
+import requests
 
 # This file accesses the data
 
@@ -21,8 +22,8 @@ def download_price_paid_data(year_from, year_to):
             for part in range(1,3):
                 url = base_url + file_name.replace("<year>", str(year)).replace("<part>", str(part))
                 response = requests.get(url)
-                if repsonse.status_code == 200:
-                    with("." + file_name.replace("<year>", str(year)).replace("<part>", "wb")) as file:
+                if response.status_code == 200:
+                    with open("." + file_name.replace("<year>", str(year)).replace("<part>", str(part)), "wb") as file:
                         file.write(response.content)
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
