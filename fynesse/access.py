@@ -7,6 +7,7 @@ import tables
 import mongodb
 import sqlite"""
 import requests
+import pymysql
 
 # This file accesses the data
 
@@ -15,11 +16,35 @@ import requests
 # Practical 1 price data
 
 def download_arbitrary_csv(url, file_name):
-        file_name = file_name + ".csv"
+        file_name = file_name
         response = requests.get(url)
         if response.status_code == 200:
             with open(file_name, "wb") as file:
                 file.write(response.content)
+
+def create_connection(user, password, host, database, port=3306):
+    """ Create a database connection to the MariaDB database
+        specified by the host url and database name.
+    :param user: username
+    :param password: password
+    :param host: host url
+    :param database: database name
+    :param port: port number
+    :return: Connection object or None
+    """
+    conn = None
+    try:
+        conn = pymysql.connect(user=user,
+                               passwd=password,
+                               host=host,
+                               port=port,
+                               local_infile=1,
+                               db=database
+                               )
+        print(f"Connection established!")
+    except Exception as e:
+        print(f"Error connecting to the MariaDB Server: {e}")
+    return conn
 
 
 def download_price_paid_data(year_from, year_to):
