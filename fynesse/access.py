@@ -13,6 +13,15 @@ import requests
 """Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
 
 # Practical 1 price data
+
+def download_arbitrary_csv(url, file_name):
+        file_name = file_name + ".csv"
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(file_name, "wb") as file:
+                file.write(response.content)
+
+
 def download_price_paid_data(year_from, year_to):
         base_url = "http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com"
         file_name = "/pp-<year>-part<part>.csv"
