@@ -8,6 +8,8 @@ import mongodb
 import sqlite"""
 import requests
 import pymysql
+import csv
+import time
 
 # This file accesses the data
 
