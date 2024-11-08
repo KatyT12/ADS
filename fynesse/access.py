@@ -78,7 +78,7 @@ def add_column_names(conn, table_name, data_frame , additional_columns = []):
     cur = conn.cursor()
     cur.execute('select column_name from information_schema.columns where table_name = "' + table_name + '";')
     output = cur.fetchall()
-    cols = np.array(rows)[:,0]
+    cols = np.array(cols)[:,0]
     data_frame.columns = list(cols.astype(str)) + additional_columns
 
 
