@@ -75,7 +75,6 @@ def housing_upload_join_data(conn, year):
 
 
 def add_column_names(conn, table_name, data_frame , additional_columns = []):
-    conn = fynesse.access.create_connection(username, password, url, 'ads_2024')
     cur = conn.cursor()
     cur.execute('select column_name from information_schema.columns where table_name = "' + table_name + '";')
     output = cur.fetchall()
