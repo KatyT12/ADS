@@ -52,6 +52,22 @@ def create_connection(user, password, host, database, port=3306):
 
 
 
+#####
+# Download purchases at a location and write into a given csv file
+def download_purchases_at_location(conn, longitude, latitude, distance_km = 1, year_onwards = 2020, output_file='output_file.csv'):
+  start_date = str(year_onwards) + "-01-01"
+  lat2, lat1, long2, long1 = get_bounding_box(latitude, longitude, distance_km) # N S E W
+
+  cur = conn.cursor()
+  print(f'select * from pp_data inner join ( select postcode from postcode_data where latitude between {lat1} and {lat2} and longitude between {long1} and {long2}) as po on po.postcode = pp_data.postcode where pp_data.date_of_transfer >= "' + start_date + '";')
+  cur.execute(f'select * from pp_data inner join ( select postcode from postcode_data where latitude between {lat1} and {lat2} and longitude between {long1} and {long2}) as po on po.postcode = pp_data.postcode where pp_data.date_of_transfer >= "' + start_date + '";')
+  rows = cur.fetchall()
+
+  with open(output_file, 'w') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerows(rows)
+
+
 def housing_upload_join_data(conn, year):
   start_date = str(year) + "-01-01"
   end_date = str(year) + "-12-31"
