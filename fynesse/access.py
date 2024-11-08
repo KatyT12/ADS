@@ -10,6 +10,8 @@ import requests
 import pymysql
 import csv
 import time
+import pandas as pd
+import numpy as np
 
 # This file accesses the data
 
@@ -71,6 +73,14 @@ def housing_upload_join_data(conn, year):
   conn.commit()
   print('Data stored for year: ' + str(year))
 
+
+def add_column_names(conn, table_name, data_frame , additional_columns = []):
+    conn = fynesse.access.create_connection(username, password, url, 'ads_2024')
+    cur = conn.cursor()
+    cur.execute('select column_name from information_schema.columns where table_name = "' + table_name + '";')
+    output = cur.fetchall()
+    cols = np.array(rows)[:,0]
+    data_frame.columns = list(cols.astype(str)) + additional_columns
 
 
 def download_price_paid_data(year_from, year_to):
