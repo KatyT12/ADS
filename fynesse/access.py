@@ -38,6 +38,7 @@ def download_arbitrary_csv(url, file_name):
     :return: Connection object or None
 """
 def create_connection(user, password, host, database, port=3306):
+    global CONNECTION
     if CONNECTION == None or not connection.open:
         conn = None
         try:
