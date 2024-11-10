@@ -13,12 +13,12 @@ import time
 import pandas as pd
 import numpy as np
 
-# This file accesses the data
+global CONNECTION
+CONNECTION = None
 
-"""Place commands in this file to access the data electronically. Don't remove any missing values, or deal with outliers. Make sure you have legalities correct, both intellectual property and personal data privacy rights. Beyond the legal side also think about the ethical issues around this data. """
-
-# Practical 1 price data
-
+# A function to download arbitrary CSV files
+# :param url: url of the csv file
+# :param file_name: name of the file to write to
 def download_arbitrary_csv(url, file_name):
         file_name = file_name
         response = requests.get(url)
@@ -26,8 +26,9 @@ def download_arbitrary_csv(url, file_name):
             with open(file_name, "wb") as file:
                 file.write(response.content)
 
-def create_connection(user, password, host, database, port=3306):
-    """ Create a database connection to the MariaDB database
+
+# A function to create a connection to any SQL database
+""" Create a database connection to the MariaDB database
         specified by the host url and database name.
     :param user: username
     :param password: password
@@ -35,25 +36,36 @@ def create_connection(user, password, host, database, port=3306):
     :param database: database name
     :param port: port number
     :return: Connection object or None
-    """
-    conn = None
-    try:
-        conn = pymysql.connect(user=user,
-                               passwd=password,
-                               host=host,
-                               port=port,
-                               local_infile=1,
-                               db=database
-                               )
-        print(f"Connection established!")
-    except Exception as e:
-        print(f"Error connecting to the MariaDB Server: {e}")
-    return conn
+"""
+def create_connection(user, password, host, database, port=3306):
+    if CONNECTION == None or not connection.open:
+        conn = None
+        try:
+            conn = pymysql.connect(user=user,
+                                passwd=password,
+                                host=host,
+                                port=port,
+                                local_infile=1,
+                                db=database
+                                )
+            print(f"Connection established!")
+        except Exception as e:
+            print(f"Error connecting to the MariaDB Server: {e}")
+        
+        CONNECTION = conn
+        return conn
+    else:
+        return CONNECTION
 
 
 
-#####
-# Download purchases at a location and write into a given csv file
+
+# Download purchases at a box and write into a given csv file
+#   :param user: connection
+#   :param password: longitude
+#   :param host: latitude
+#   :param distance_km: distance in km
+
 def download_purchases_at_location(conn, longitude, latitude, distance_km = 1, year_onwards = 2020, output_file='output_file.csv'):
   start_date = str(year_onwards) + "-01-01"
   lat2, lat1, long2, long1 = get_bounding_box(latitude, longitude, distance_km) # N S E W
@@ -68,6 +80,11 @@ def download_purchases_at_location(conn, longitude, latitude, distance_km = 1, y
     csv_writer.writerows(rows)
 
 
+
+
+# Upload the jdata from joining postcodes and pp_data
+#   :param connection: Database connection
+#   :param year: year of transactions
 def housing_upload_join_data(conn, year):
   start_date = str(year) + "-01-01"
   end_date = str(year) + "-12-31"
@@ -90,12 +107,52 @@ def housing_upload_join_data(conn, year):
   print('Data stored for year: ' + str(year))
 
 
+# Add the appropriate column names to a dataframe taken from SQL, with additional columns possibly
+#   :param conn: Database connection
+#   :param table_name: Name of the table to take columns from
+#   :param data_frame: Data frame to add columns to
+#   :additional_columns: additional columns to add
+#   :warning: will throw an error if the dimensions do not add up
+
 def add_column_names(conn, table_name, data_frame , additional_columns = []):
     cur = conn.cursor()
     cur.execute('select column_name from information_schema.columns where table_name = "' + table_name + '";')
     output = cur.fetchall()
     cols = np.array(output)[:,0]
     data_frame.columns = list(cols.astype(str)) + additional_columns
+
+
+
+# Approximately convert square degree to squre metres
+def to_sqm(deg):
+    return deg * (111.2**2) * (1000**2)
+
+# Retrieve buildings data from geographic data, specify tags and return the buildings with addresses, and without
+def get_buildings_data_from_geo(latitude, longitude, distance_km=2, with_postcode = False, raw=False, tags = {
+    'building': True,
+    'addr:housenumber':True,
+    'addr:street':True,
+    'addr:postcode':True,
+  }):
+  n, s, e, w = get_bounding_box(latitude, longitude, distance_km)
+
+  print(n,s,e,w)
+  points_of_interest = ox.geometries_from_bbox(n, s, e, w, tags)
+  poi_df = pd.DataFrame(points_of_interest)
+  poi_df['area'] = to_sqm(points_of_interest['geometry'].area)
+
+  if with_postcode:
+    buildings_with_addressses = points_of_interest[poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull() & poi_df['addr:postcode'].notnull()]
+    buildings_without_addresses = points_of_interest[~(poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull() & poi_df['addr:postcode'].notnull())]
+  else:
+    buildings_with_addressses = points_of_interest[poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull()]
+    buildings_without_addresses = points_of_interest[~(poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull())]
+
+  if raw:
+    return buildings_with_addressses, buildings_without_addresses
+  else:
+    return pd.DataFrame(buildings_with_addressses), pd.DataFrame(buildings_without_addresses)
+
 
 
 def download_price_paid_data(year_from, year_to):

@@ -52,18 +52,20 @@ def plot_correlation(joined, labels):
   plt.show()
 
 
-def plot_area_vs_price(joined, over_column):
+# Plot the correlation between l1 and l2, over some variable over_column
+def plot_correlation_over_variable(joined, l1, l2, over_column):
   fig, ax = plt.subplots(figsize=(12,3))
   x_axis = np.array(joined[over_column].drop_duplicates().sort_values())
   y_axis = []
   for x in x_axis:
-    p = joined[joined[over_column] == x][['area','price']].corr()
-
-    y_axis.append(p['price'].iloc[0])
+    p = joined[joined[over_column] == x][[l1,l2]].corr()
+    y_axis.append(p[l2].iloc[0])
   plt.bar(x_axis, y_axis)
   ax.set_xticklabels(x_axis, fontsize=7, rotation=90)
   ax.set_title('Correlation for each postcode')
   plt.show()
+
+
 
 # Postcode, price per metre
 def plot_mean_price_area_ratio(joined, over_column):
@@ -121,7 +123,35 @@ def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, d
 
 
 
+# Plot the area and points of interest onto a graph
+#   :param longitude
+#   :param latitude
+#   :param distance: distance in km of the box
+#   :param place_name
+#   :param pois_and_colours, the points of interest you want to include, and their colour on the map
+def plot_location(longitude, latitude, distance, place_name, *pois_and_colours):
+  n, s, e, w = get_bounding_box(latitude, longitude, 2)
+  graph = ox.graph_from_bbox(n, s, e, w, tags)
+  nodes, edges = ox.graph_to_gdfs(graph)
 
+  area = ox.geocode_to_gdf(place_name.lower())
+
+  fig, ax = plt.subplots(figsize=(16, 8))
+  area.plot(ax=ax, facecolor="white")
+  edges.plot(ax=ax, linewidth=1, edgecolor="dimgray")
+
+  ax.set_xlim([w, e])
+  ax.set_ylim([s, n])
+
+  ax.set_xlabel("longitude")
+  ax.set_ylabel("latitude")
+
+
+  for (x, c) in pois_and_colours:
+    
+    x.plot(ax=ax, color = c, alpha = 0.7)
+  plt.tight_layout()
+  plt.show()
 
 
 
