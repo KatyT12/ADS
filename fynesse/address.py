@@ -23,6 +23,7 @@ import numpy as np
 import re
 import matplotlib.pyplot as plt
 import osmnx as ox
+from .util import *
 
 def get_bounding_box(latitude: float, longitude: float, distance_km: float = 1.0):
   distance = distance_km / 111.2

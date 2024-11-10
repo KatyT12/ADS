@@ -12,6 +12,7 @@ import csv
 import time
 import pandas as pd
 import numpy as np
+from .util import *
 
 global CONNECTION
 CONNECTION = None
