@@ -10,8 +10,10 @@ import requests
 import pymysql
 import csv
 import time
+import math
 import pandas as pd
 import numpy as np
+import osmnx as ox
 from .util import *
 
 global CONNECTION
@@ -125,31 +127,37 @@ def add_column_names(conn, table_name, data_frame , additional_columns = []):
 
 
 
-# Approximately convert square degree to squre metres
-def to_sqm(deg):
-    return deg * (111.2**2) * (1000**2)
+def get_buildings_data_from_geo(latitude, longitude, tags, distance_km=2):
+  n, s, e, w = get_bounding_box(latitude, longitude, distance_km)
+  print(n,s,e,w)
+  points_of_interest = ox.geometries_from_bbox(n, s, e, w, tags)
+  return points_of_interest
 
+def filter_dataframe(df, tags):
+  ret = df
+  ret_ind = df.index
+  for t in tags:
+    ret_ind = ret_ind.intersection(ret.loc[ret_ind][t].dropna().index)
+  
+  return ret.loc[ret_ind], ret.loc[~ret.index.isin(ret_ind)]
 # Retrieve buildings data from geographic data, specify tags and return the buildings with addresses, and without
-def get_buildings_data_from_geo(latitude, longitude, distance_km=2, with_postcode = False, raw=False, tags = {
+def get_addressed_buildings_data_from_geo(latitude, longitude, distance_km=2, with_postcode = False, raw=False, tags = {
     'building': True,
     'addr:housenumber':True,
     'addr:street':True,
     'addr:postcode':True,
   }):
-  n, s, e, w = get_bounding_box(latitude, longitude, distance_km)
-
-  print(n,s,e,w)
-  points_of_interest = ox.geometries_from_bbox(n, s, e, w, tags)
+ 
+  points_of_interest = get_buildings_data_from_geo(latitude, longitude, tags, distance_km)
   poi_df = pd.DataFrame(points_of_interest)
-  poi_df['area'] = to_sqm(points_of_interest['geometry'].area)
+  poi_df['area'] = to_sqm(points_of_interest['geometry'])
+  print(len(poi_df.index))
 
   if with_postcode:
-    buildings_with_addressses = points_of_interest[poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull() & poi_df['addr:postcode'].notnull()]
-    buildings_without_addresses = points_of_interest[~(poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull() & poi_df['addr:postcode'].notnull())]
+    #buildings_with_addressses = points_of_interest[poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull() & poi_df['addr:postcode'].notnull()]
+    buildings_with_addressses, buildings_without_addresses = filter_dataframe(poi_df, ['addr:housenumber', 'addr:street', 'addr:postcode'])
   else:
-    buildings_with_addressses = points_of_interest[poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull()]
-    buildings_without_addresses = points_of_interest[~(poi_df['addr:housenumber'].notnull() & poi_df['addr:street'].notnull())]
-
+    buildings_with_addressses, buildings_without_addresses = filter_dataframe(poi_df, ['addr:housenumber', 'addr:street'])
   if raw:
     return buildings_with_addressses, buildings_without_addresses
   else:
@@ -169,6 +177,40 @@ def download_price_paid_data(year_from, year_to):
                 if response.status_code == 200:
                     with open("." + file_name.replace("<year>", str(year)).replace("<part>", str(part)), "wb") as file:
                         file.write(response.content)
+
+
+
+
+
+# Longitude and latitude convert
+
+def latlong_to_km(latitude: float, longitude: float, lat_dist, lon_dist):
+  distance_lat = lat_dist / 110.574
+  distance_long = lon_dist / (math.cos(latitude * math.pi / 180) * 111.32)
+  return (distance_lat, distance_long)
+
+# Approximately convert square degree to squre metres
+
+
+def to_sqm(geometry):
+    return geometry.to_crs(6933).area
+
+
+def latlong_diff_to_distance(latitude: float, longitude: float, lat_dist, lon_dist):
+  distance_lat, distance_long = latlong_to_km(latitude, longitude, lat_dist, lon_dist)
+  total_distance = sqrt(distance_lat**2 + distance_long**2)
+  return total_distance
+
+def get_bounding_box(latitude: float, longitude: float, distance_km: float = 1.0):
+  distance_lat, distance_long = latlong_to_km(latitude, longitude, distance_km, distance_km)
+
+  north = latitude + (distance_lat/2)
+  south = latitude - (distance_lat/2)
+  west = longitude - (distance_long/2)
+  east = longitude + (distance_long/2)
+  return (north, south, east, west)
+
+
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
     raise NotImplementedError
