@@ -111,8 +111,18 @@ def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, d
               ret_counts[t] = 0
     return ret_counts
 
+# Clean the extracted price_paid and and given OpenStreetMap dataframes
+#   :warning: Removes all rows of price paid data with street NA
+def clean_geo_pp_data(con, pp_data, *dataframes_to_clean):
+  #
 
+  add_column_names(con, 'pp_data', pp_data, ['Postcode 2'])
+  pp_data['street'] = [x.lower() if isinstance(x, str) else math.nan for x in pp_data['street']]
 
+  for df in dataframes_to_clean:
+    df['addr:street'] = [x.lower().replace('\'','') if isinstance(x, str) else x  for x in df['addr:street']]
+
+  con.commit()
 
 # Plot the area and points of interest onto a graph
 #   :param longitude
@@ -143,63 +153,3 @@ def plot_location(longitude, latitude, distance, place_name, *pois_and_colours):
     x.plot(ax=ax, color = c, alpha = 0.7)
   plt.tight_layout()
   plt.show()
-
-
-
-#############
-# Joins for the OpenStreetMap data and the normal data
-def exact_join(data, houses_df):
-  joined1 = pd.merge(houses_df, data, left_on=['addr:street', 'addr:housenumber'], right_on=['street', 'primary_addressable_object_name'], how='inner')
-  return joined1
-
-def join_house_names(data, houses_df):
-    houses_df['housename_number_combined'] = ['' if isinstance(x['addr:housename'], float) else str(x['addr:housename'].upper()) + ', ' + x['addr:housenumber'] for _,x in houses_df.iterrows()]
-    data_null_secondary = data[~data['secondary_addressable_object_name'].notnull()]
-    joined2 =  pd.merge(houses_df, data_null_secondary, left_on=['addr:street', 'housename_number_combined'], right_on=['street', 'primary_addressable_object_name'], how='inner')
-    return joined2
-
-def join(data, houses_df):
-  joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
-  return joined
-
-
-
-
-###############
-## Seperate Flat rows
-def seperate_flats_data(houses_df):
-  geo_flats = houses_df[houses_df['addr:flats'].notnull()]
-  chosen_flats = geo_flats[geo_flats['addr:flats'].map( lambda x: True if (re.search(r"(\d+)-(\d+)",x)) else False)]
-
-  chosen_flats['flat_num'] = pd.NA
-  flats_nums = chosen_flats['addr:flats'].map(lambda x: x.split('-'))
-  print(list(flats_nums))
-
-  temp = chosen_flats.copy()
-  for i,r in temp.iterrows():
-    print(flats_nums[i])
-    start = int(flats_nums[i][0])
-    end = int(flats_nums[i][1])
-    num = end - start + 1
-    for j in range(start, end+1):
-      new_row = r.copy()
-      new_row['flat_num'] = 'FLAT ' + str(j)
-      new_row['area'] = new_row['area']/num
-
-      chosen_flats.loc[len(chosen_flats)] = new_row
-
-  houses_df['flat_num'] = pd.NA
-  houses_df = pd.concat([houses_df, chosen_flats[chosen_flats['flat_num'].notnull()]])
-  return houses_df
-
-def join_on_with_flats(joined, houses_df, data):
-  flats = data[data['secondary_addressable_object_name'].map(lambda x: False if isinstance(x, float) else 'FLAT' in x) ]
-  houses_df = seperate_flats_data(houses_df)
-  houses_df['first_address'] = [ x['addr:housenumber'] if (x['housename_number_combined'] == '') else x['housename_number_combined'] for _,x in houses_df.iterrows()]
-  joined_flats =  pd.merge(houses_df, flats, left_on=['addr:street', 'first_address', 'flat_num'], right_on=['street', 'primary_addressable_object_name', 'secondary_addressable_object_name'], how='inner')
-  joined = pd.concat([joined, joined_flats])
-
-  # Sanity check
-  #data[data['date_of_transfer'].eq('1995-07-07') & data['street'].eq('bateman street')]
-
-  return joined

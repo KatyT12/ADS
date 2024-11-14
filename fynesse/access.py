@@ -14,6 +14,7 @@ import math
 import pandas as pd
 import numpy as np
 import osmnx as ox
+import re
 from .util import *
 
 global CONNECTION
@@ -84,7 +85,19 @@ def download_purchases_at_location(conn, longitude, latitude, distance_km = 1, y
     csv_writer.writerows(rows)
 
 
+# Download purchases places in csv file and then returns a dataframe
+#   :param user: connection
+#   :param password: longitude
+#   :param host: latitude
+#   :param distance_km: distance in km
+def load_as_dataframe(con, longitude, latitude, distance_km=2, year_onwards=1994):
+  print(get_bounding_box(latitude, longitude, distance_km))
 
+  download_purchases_at_location(con, longitude, latitude, distance_km=distance_km, year_onwards=year_onwards, output_file='1994_houses_bought.csv')
+
+  data = pd.read_csv('./1994_houses_bought.csv')
+  con.commit()
+  return data
 
 # Upload the jdata from joining postcodes and pp_data
 #   :param connection: Database connection
@@ -126,13 +139,19 @@ def add_column_names(conn, table_name, data_frame , additional_columns = []):
     data_frame.columns = list(cols.astype(str)) + additional_columns
 
 
-
+#   Simply collect all points of interest in the given bounding box
+#   :param longitude
+#   :param latitude 
+#   :param distance_km: width of square
 def get_buildings_data_from_geo(latitude, longitude, tags, distance_km=2):
   n, s, e, w = get_bounding_box(latitude, longitude, distance_km)
   print(n,s,e,w)
   points_of_interest = ox.geometries_from_bbox(n, s, e, w, tags)
   return points_of_interest
 
+#   Filter a dataframe based on if rows have each tag tags. Return a set of rows which do and the complement
+#   :param df: the data frame
+#   :param tags: tags to filter
 def filter_dataframe(df, tags):
   ret = df
   ret_ind = df.index
@@ -140,7 +159,15 @@ def filter_dataframe(df, tags):
     ret_ind = ret_ind.intersection(ret.loc[ret_ind][t].dropna().index)
   
   return ret.loc[ret_ind], ret.loc[~ret.index.isin(ret_ind)]
-# Retrieve buildings data from geographic data, specify tags and return the buildings with addresses, and without
+
+
+#   Get 'addressed' data which is rows that have a house number, street and optionally a postcode
+#   :param longitude
+#   :param latitude 
+#   :param distance_km: width of square
+#   :param with_postcode: include postcode in filtering
+#   :param raw: dataframe or raw object from the API
+#   :param tags: tags to search for
 def get_addressed_buildings_data_from_geo(latitude, longitude, distance_km=2, with_postcode = False, raw=False, tags = {
     'building': True,
     'addr:housenumber':True,
@@ -179,9 +206,6 @@ def download_price_paid_data(year_from, year_to):
                         file.write(response.content)
 
 
-
-
-
 # Longitude and latitude convert
 
 def latlong_to_km(latitude: float, longitude: float, lat_dist, lon_dist):
@@ -209,6 +233,77 @@ def get_bounding_box(latitude: float, longitude: float, distance_km: float = 1.0
   west = longitude - (distance_long/2)
   east = longitude + (distance_long/2)
   return (north, south, east, west)
+
+
+### Joins
+#############
+# Joins for the OpenStreetMap data and the normal data
+
+
+#   Join based on matching the street and address
+def exact_join(data, houses_df):
+  joined1 = pd.merge(houses_df, data, left_on=['addr:street', 'addr:housenumber'], right_on=['street', 'primary_addressable_object_name'], how='inner')
+  return joined1
+
+#   Join based on matching the street and house number + housename
+def join_house_names(data, houses_df):
+    houses_df['housename_number_combined'] = ['' if isinstance(x['addr:housename'], float) else str(x['addr:housename'].upper()) + ', ' + x['addr:housenumber'] for _,x in houses_df.iterrows()]
+    data_null_secondary = data[~data['secondary_addressable_object_name'].notnull()]
+    joined2 =  pd.merge(houses_df, data_null_secondary, left_on=['addr:street', 'housename_number_combined'], right_on=['street', 'primary_addressable_object_name'], how='inner')
+    return joined2
+
+def join(data, houses_df):
+  joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
+  return joined
+
+
+
+
+###############
+## Seperate Flat rows
+def seperate_flats_data(houses_df):
+  geo_flats = houses_df[houses_df['addr:flats'].notnull()]   # Could change this
+  chosen_flats = geo_flats[geo_flats['addr:flats'].map( lambda x: True if (re.search(r"^(\d+)-(\d+)$",x)) else False)]
+
+  chosen_flats['flat_num'] = pd.NA
+  flats_nums = chosen_flats['addr:flats'].map(lambda x: x.split('-'))
+  print(list(flats_nums))
+
+  temp = chosen_flats.copy()
+  for i,r in temp.iterrows():
+    print(flats_nums[i])
+    start = int(flats_nums[i][0])
+    end = int(flats_nums[i][1])
+    num = end - start + 1
+    for j in range(start, end+1):
+      new_row = r.copy()
+      new_row['flat_num'] = 'FLAT ' + str(j)
+      new_row['area'] = new_row['area']/num
+
+      chosen_flats.loc[len(chosen_flats)] = new_row
+
+  houses_df['flat_num'] = pd.NA
+  houses_df = pd.concat([houses_df, chosen_flats[chosen_flats['flat_num'].notnull()]])
+  return houses_df
+
+def join_on_with_flats(joined, houses_df, data):
+  flats = data[data['secondary_addressable_object_name'].map(lambda x: False if isinstance(x, float) else 'FLAT' in x) ]
+  houses_df = seperate_flats_data(houses_df)
+  houses_df['first_address'] = [ x['addr:housenumber'] if (x['housename_number_combined'] == '') else x['housename_number_combined'] for _,x in houses_df.iterrows()]
+  joined_flats =  pd.merge(houses_df, flats, left_on=['addr:street', 'first_address', 'flat_num'], right_on=['street', 'primary_addressable_object_name', 'secondary_addressable_object_name'], how='inner')
+  joined = pd.concat([joined, joined_flats])
+
+  # Sanity check
+  #data[data['date_of_transfer'].eq('1995-07-07') & data['street'].eq('bateman street')]
+
+  return joined
+
+
+
+def join_with_heuristics(data, houses_df):
+  joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
+  join_on_with_flats(joined, houses_df, data)
+  return joined
 
 
 def data():
