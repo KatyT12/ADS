@@ -361,18 +361,9 @@ def create_nssec_table(conn):
     conn.commit()
 
 def load_nssec_to_sql(conn, csv_file):
-    %sql USE `ads_2024`;
-    %sql LOAD DATA LOCAL INFILE "./pp-1995-part1.csv" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '"' LINES STARTING BY '' TERMINATED BY '\n';
-    %sql LOAD DATA LOCAL INFILE "./pp-1995-part2.csv" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '"' LINES STARTING BY '' TERMINATED BY '\n';
+    load_query = """LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n'"""
 
-    load_query = """LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n'"""
-    shutil.unpack_archive("temp.csv.zip", 'zip/')
-
-    query = """LOAD DATA LOCAL INFILE 'zip/open_postcode_geo.csv' INTO TABLE `postcode_data`
-    FIELDS TERMINATED BY ',' 
-    LINES TERMINATED BY '\n';"""
-
-    conn.cursor().execute(query)
+    conn.cursor().execute(load_query)
     conn.commit()
 
 def populate_nssec_table(conn):
