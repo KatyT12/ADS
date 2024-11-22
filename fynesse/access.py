@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import osmnx as ox
 import re
+from ipywidgets import interact_manual, Text, Password
 from .util import *
 
 global CONNECTION
