@@ -338,6 +338,7 @@ def create_nssec_table(conn):
           CREATE TABLE IF NOT EXISTS `nssec_data` (
             geography_code tinytext COLLATE utf8_bin NOT NULL,
             total_over_16 int(10) unsigned NOT NULL,
+            census_date date NOT NULL,
             L1_3 INT UNSIGNED NOT NULL COMMENT 'L1, L2 and L3 Higher managerial, administrative and professional occupations',
             L4_6 INT UNSIGNED NOT NULL COMMENT 'Lower managerial, administrative and professional occupations',
             L7 INT UNSIGNED NOT NULL COMMENT 'Intermediate occuptations',
@@ -358,6 +359,24 @@ def create_nssec_table(conn):
     conn.cursor().execute(add_primary_key)
     conn.cursor().execute(auto_increment)
     conn.commit()
+
+def load_nssec_to_sql(conn, csv_file):
+    %sql USE `ads_2024`;
+    %sql LOAD DATA LOCAL INFILE "./pp-1995-part1.csv" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '"' LINES STARTING BY '' TERMINATED BY '\n';
+    %sql LOAD DATA LOCAL INFILE "./pp-1995-part2.csv" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '"' LINES STARTING BY '' TERMINATED BY '\n';
+
+    load_query = """LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `pp_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n'"""
+    shutil.unpack_archive("temp.csv.zip", 'zip/')
+
+    query = """LOAD DATA LOCAL INFILE 'zip/open_postcode_geo.csv' INTO TABLE `postcode_data`
+    FIELDS TERMINATED BY ',' 
+    LINES TERMINATED BY '\n';"""
+
+    conn.cursor().execute(query)
+    conn.commit()
+
+def populate_nssec_table(conn):
+  
 
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
