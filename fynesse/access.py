@@ -361,7 +361,7 @@ def create_nssec_table(conn):
     conn.commit()
 
 def load_nssec_to_sql(conn, csv_file):
-    load_query = """LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n'"""
+    load_query = """LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
 
     conn.cursor().execute(load_query)
     conn.commit()
