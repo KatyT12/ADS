@@ -53,7 +53,7 @@ def create_connection(database='ads_2024', cred_file='credentials.yaml'):
             user = credentials["username"]
             password = credentials["password"]
             host = credentials["url"]
-            port = credentials["port"]
+            port = int(credentials["port"])
             db = database
           try:
               conn = pymysql.connect(user=user,
