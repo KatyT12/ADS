@@ -336,9 +336,9 @@ def create_nssec_table(conn):
     drop = "DROP TABLE IF EXISTS nssec_data"
     create_query = """
           CREATE TABLE IF NOT EXISTS `nssec_data` (
+            census_date date NOT NULL,
             geography_code tinytext COLLATE utf8_bin NOT NULL,
             total_over_16 int(10) unsigned NOT NULL,
-            census_date date NOT NULL,
             L1_3 INT UNSIGNED NOT NULL COMMENT 'L1, L2 and L3 Higher managerial, administrative and professional occupations',
             L4_6 INT UNSIGNED NOT NULL COMMENT 'Lower managerial, administrative and professional occupations',
             L7 INT UNSIGNED NOT NULL COMMENT 'Intermediate occuptations',
