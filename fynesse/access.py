@@ -397,8 +397,8 @@ def create_oa_latlong_table(conn):
             lsoa_name VARCHAR(50) NOT NULL,
             latitude decimal(11,8) NOT NULL,
             longitude decimal(10,8) NOT NULL,
-            shape_area decimal(10,11) NOT NULL,
-            shape_length decimal(10,11) NOT NULL,
+            shape_area decimal(11,11) NOT NULL,
+            shape_length decimal(11,11) NOT NULL,
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
