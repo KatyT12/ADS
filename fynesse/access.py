@@ -338,15 +338,15 @@ def create_nssec_table(conn):
           CREATE TABLE IF NOT EXISTS `nssec_data` (
             geography_code tinytext COLLATE utf8_bin NOT NULL,
             total_over_16 int(10) unsigned NOT NULL,
-            L1_3 INT UNSIGNED utf8_bin NOT NULL COMMENT 'L1, L2 and L3 Higher managerial, administrative and professional occupations',
-            L4_6 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Lower managerial, administrative and professional occupations',
-            L7 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Intermediate occuptations',
-            L8_9 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Small employers and own account workers',
-            L10_11 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Lower supervisory and technical occupations',
-            L12 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Semi Routine',
-            L13 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Routine Occupations',
-            L14 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Never worked and long time unemployed',
-            L15 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Full time students',
+            L1_3 INT UNSIGNED NOT NULL COMMENT 'L1, L2 and L3 Higher managerial, administrative and professional occupations',
+            L4_6 INT UNSIGNED NOT NULL COMMENT 'Lower managerial, administrative and professional occupations',
+            L7 INT UNSIGNED NOT NULL COMMENT 'Intermediate occuptations',
+            L8_9 INT UNSIGNED NOT NULL COMMENT 'Small employers and own account workers',
+            L10_11 INT UNSIGNED NOT NULL COMMENT 'Lower supervisory and technical occupations',
+            L12 INT UNSIGNED NOT NULL COMMENT 'Semi Routine',
+            L13 INT UNSIGNED NOT NULL COMMENT 'Routine Occupations',
+            L14 INT UNSIGNED NOT NULL COMMENT 'Never worked and long time unemployed',
+            L15 INT UNSIGNED NOT NULL COMMENT 'Full time students',
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
