@@ -14,6 +14,7 @@ import math
 import pandas as pd
 import numpy as np
 import osmnx as ox
+import yaml
 import re
 from ipywidgets import interact_manual, Text, Password
 from .util import *
@@ -42,21 +43,32 @@ def download_arbitrary_csv(url, file_name):
     :param port: port number
     :return: Connection object or None
 """
-def create_connection(user, password, host, database, port=3306):
+def create_connection(database='ads_2024', cred_file='credentials.yaml'):
     CONNECTION = None
     if CONNECTION == None or not connection.open:
         conn = None
         try:
-            conn = pymysql.connect(user=user,
-                                passwd=password,
-                                host=host,
-                                port=port,
-                                local_infile=1,
-                                db=database
-                                )
-            print(f"Connection established!")
-        except Exception as e:
-            print(f"Error connecting to the MariaDB Server: {e}")
+          with open(cred_file) as file:
+            credentials = yaml.safe_load(file)
+            user = credentials["username"]
+            password = credentials["password"]
+            host = credentials["url"]
+            port = credentials["port"]
+            db = database
+          try:
+              conn = pymysql.connect(user=user,
+                                  passwd=password,
+                                  host=host,
+                                  port=port,
+                                  local_infile=1,
+                                  db=database
+                                  )
+              print(f"Connection established!")
+          except Exception as e:
+              print(f"Error connecting to the MariaDB Server: {e}")
+        except FileNotFoundError:
+          print(f"Could not find {cred_file}, please call create_credentials() and enter your details first")
+          return None
         
         CONNECTION = conn
         return conn
