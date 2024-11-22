@@ -360,6 +360,16 @@ def create_nssec_table(conn):
     conn.cursor().execute(auto_increment)
     conn.commit()
 
+  # It might be preferable to have this seperated from create_nssec_table
+def create_nssec_index(conn):
+  index_geography_query = """CREATE INDEX nssec_geography_code USING HASH ON nssec_data (geography_code)"""
+  index_student_query = """CREATE INDEX nssec_L15 USING HASH ON nssec_data (L15)"""
+  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_student_query)
+  conn.commit()
+
+    
+
 def load_nssec_to_sql(conn, csv_file):
     load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
 
