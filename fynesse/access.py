@@ -394,7 +394,7 @@ def create_oa_latlong_table(conn):
             census_date date NOT NULL,
             oa tinytext COLLATE utf8_bin NOT NULL,
             lsoa tinytext COLLATE utf8_bin NOT NULL,
-            lsoa_name VARCHAR(60) NOT NULL,
+            lsoa_name VARCHAR(100) NOT NULL,
             latitude decimal(11,8) NOT NULL,
             longitude decimal(10,8) NOT NULL,
             shape_area decimal(20,8) NOT NULL,
