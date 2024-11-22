@@ -305,6 +305,18 @@ def join_with_heuristics(data, houses_df):
   return joined
 
 
+def create_credentials():
+  @interact_manual(username=Text(description="Username:"),
+                password=Password(description="Password:"),
+                url=Text(description="URL:"),
+                port=Text(description="Port:"))
+  def write_credentials(username, password, url, port):
+    with open("credentials.yaml", "w") as file:
+        credentials_dict = {'username': username,
+                           'password': password,
+                           'url': url,
+                           'port': port}
+        yaml.dump(credentials_dict, file)
 
 # Create tables
 def create_nssec_table(conn):
