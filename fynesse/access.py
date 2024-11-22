@@ -366,8 +366,6 @@ def load_nssec_to_sql(conn, csv_file):
     conn.cursor().execute(load_query)
     conn.commit()
 
-def populate_nssec_table(conn):
-  
 
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
