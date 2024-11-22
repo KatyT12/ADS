@@ -418,7 +418,7 @@ def load_oa_coord_data_to_sql(conn, csv_file):
 
 def create_oa_latlong_index(conn):
   index_oa_query = """CREATE INDEX oa_latlong_output_area USING HASH ON oa_latlong_data (oa)"""
-  index_date_query = """CREATE INDEX oa_latlong_date USING HASH ON oa_latlong_data (cenus_date)"""
+  index_date_query = """CREATE INDEX oa_latlong_date USING HASH ON oa_latlong_data (census_date)"""
   index_latlong_query = """CREATE INDEX oa_latlong_latlong USING HASH ON oa_latlong_data (latitude, longitude)"""
   conn.cursor().execute(index_oa_query)
   conn.cursor().execute(index_date_query)
