@@ -412,7 +412,7 @@ def create_oa_latlong_table(conn):
 
 # Could generalise these loads, but that might cause more issues than make life easier
 def load_oa_coord_data_to_sql(conn, csv_file):
-  load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `oa_latlong_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
+  load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `oa_latlong_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
   conn.cursor().execute(load_query)
   conn.commit()
 
