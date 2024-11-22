@@ -299,12 +299,40 @@ def join_on_with_flats(joined, houses_df, data):
   return joined
 
 
-
 def join_with_heuristics(data, houses_df):
   joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
   join_on_with_flats(joined, houses_df, data)
   return joined
 
+
+
+# Create tables
+def create_nssec_table(conn):
+    drop = "DROP TABLE IF EXISTS nssec_data"
+    create_query = """
+          CREATE TABLE IF NOT EXISTS `nssec_data` (
+            geography_code tinytext COLLATE utf8_bin NOT NULL,
+            total_over_16 int(10) unsigned NOT NULL,
+            L1_3 INT UNSIGNED utf8_bin NOT NULL COMMENT 'L1, L2 and L3 Higher managerial, administrative and professional occupations',
+            L4_6 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Lower managerial, administrative and professional occupations',
+            L7 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Intermediate occuptations',
+            L8_9 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Small employers and own account workers',
+            L10_11 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Lower supervisory and technical occupations',
+            L12 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Semi Routine',
+            L13 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Routine Occupations',
+            L14 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Never worked and long time unemployed',
+            L15 INT UNSIGNED utf8_bin NOT NULL COMMENT 'Full time students',
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+    add_primary_key = "ALTER TABLE nssec_data ADD PRIMARY KEY (db_id)";
+    auto_increment = "ALTER TABLE nssec_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+    conn.cursor().execute(drop)
+    conn.cursor().execute(create_query)
+    conn.cursor().execute(add_primary_key)
+    conn.cursor().execute(auto_increment)
+    conn.commit()
 
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
