@@ -371,7 +371,7 @@ def create_nssec_table(conn):
 def create_nssec_index(conn):
   index_geography_query = """CREATE INDEX nssec_geography_code USING HASH ON nssec_data (geography_code)"""
   index_student_query = """CREATE INDEX nssec_L15 USING HASH ON nssec_data (L15)"""
-  index_date_query = """CREATE INDEX nssec_date USING HASH ON nssec_data (date)"""
+  index_date_query = """CREATE INDEX nssec_date USING HASH ON nssec_data (census_date)"""
   conn.cursor().execute(index_geography_query)
   conn.cursor().execute(index_student_query)
   conn.cursor().execute(index_date_query)
