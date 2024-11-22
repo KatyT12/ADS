@@ -387,7 +387,7 @@ def load_nssec_to_sql(conn, csv_file):
 
 
 # Create the oa_latlong table (maps output area to latlong), contains multiple years
-def create_oa_latlong_table(connection):
+def create_oa_latlong_table(conn):
   drop = "DROP TABLE IF EXISTS oa_latlong_data"
   create_query = """
           CREATE TABLE IF NOT EXISTS `oa_latlong_data` (
