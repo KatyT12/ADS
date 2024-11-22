@@ -331,7 +331,13 @@ def create_credentials():
                            'port': port}
         yaml.dump(credentials_dict, file)
 
-# Create tables
+
+
+#--------------------------------------------------------------------------------------
+# Code for creating tables, creating indices, and loading data to tables
+
+
+# Create the table for the NSSEC data
 def create_nssec_table(conn):
     drop = "DROP TABLE IF EXISTS nssec_data"
     create_query = """
@@ -360,22 +366,63 @@ def create_nssec_table(conn):
     conn.cursor().execute(auto_increment)
     conn.commit()
 
-  # It might be preferable to have this seperated from create_nssec_table
+# It might be preferable to have this seperated from create_nssec_table
+# Create appropriate indices for the NSSEC table
 def create_nssec_index(conn):
   index_geography_query = """CREATE INDEX nssec_geography_code USING HASH ON nssec_data (geography_code)"""
   index_student_query = """CREATE INDEX nssec_L15 USING HASH ON nssec_data (L15)"""
+  index_date_query = """CREATE INDEX nssec_date USING HASH ON nssec_data (date)"""
   conn.cursor().execute(index_geography_query)
   conn.cursor().execute(index_student_query)
+  conn.cursor().execute(index_date_query)
   conn.commit()
 
-    
 
+
+# Load to the NSSEC table
 def load_nssec_to_sql(conn, csv_file):
     load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
-
     conn.cursor().execute(load_query)
     conn.commit()
 
+
+# Create the oa_latlong table (maps output area to latlong), contains multiple years
+def create_oa_latlong_table(connection):
+  drop = "DROP TABLE IF EXISTS oa_latlong_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `oa_latlong_data` (
+            census_date date NOT NULL,
+            oa tinytext COLLATE utf8_bin NOT NULL,
+            lsoa tinytext COLLATE utf8_bin NOT NULL,
+            lsoa_name VARCHAR(50) NOT NULL,
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,
+            shape_area decimal(10,11) NOT NULL,
+            shape_length decimal(10,11) NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE oa_latlong_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE oa_latlong_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+# Could generalise these loads, but that might cause more issues than make life easier
+def load_oa_coord_data_to_sql(conn, csv_file):
+  load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `oa_latlong_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
+  conn.cursor().execute(load_query)
+  conn.commit()
+
+def create_oa_latlong_index(conn):
+  index_geography_query = """CREATE INDEX oa_latlong_output_area USING HASH ON oa_latlong_data (oa)"""
+  index_student_query = """CREATE INDEX oa_latlong_date USING HASH ON oa_latlong_data (cenus_date)"""
+  index_student_query = """CREATE INDEX oa_latlong_date USING HASH ON oa_latlong_data (cenus_date)"""
+  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_student_query)
+  conn.commit()
 
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
