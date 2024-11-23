@@ -464,6 +464,15 @@ def create_household_cars_data(conn):
   conn.cursor().execute(auto_increment)
   conn.commit()
 
+def create_household_vehicle_index(conn):
+  index_geography_query = """CREATE INDEX household_vehicles_code USING HASH ON household_vehicle_data (geography_code)"""
+  index_ratio_query = """CREATE INDEX household_vehicles_no_car_ratio USING HASH ON household_vehicle_data (no_vehicle_ratio)"""
+  index_date_query = """CREATE INDEX household_vehicles_date USING HASH ON household_vehicle_data (census_date)"""
+  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_ratio_query)
+  conn.cursor().execute(index_date_query)
+  conn.commit()
+
 def load_census_data_to_sql(conn, csv_file, table):
   load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `{table}` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
   conn.cursor().execute(load_query)
