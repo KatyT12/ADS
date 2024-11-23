@@ -437,7 +437,7 @@ def create_household_cars_data(conn):
             one_vehicle_count INT UNSIGNED NOT NULL,                      
             two_vehicle_count INT UNSIGNED NOT NULL,                      
             three_vehicle_count INT UNSIGNED NOT NULL,                      
-            db_id bigint(20) INT UNSIGNED NOT NULL
+            db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
   add_primary_key = "ALTER TABLE household_vehicle_data ADD PRIMARY KEY (db_id)";
