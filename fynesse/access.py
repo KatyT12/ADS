@@ -442,15 +442,22 @@ def create_household_cars_data(conn):
 
   add_primary_key = "ALTER TABLE household_vehicle_data ADD PRIMARY KEY (db_id)";
   
+  cols = ['no_vehicle_count', 'one_vehicle_count', 'two_vehicle_count', 'three_vehicle_count']
+  base_ratio_query = 'ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE count / total END);'
+  
+  
   add_ratio_0 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE no_vehicle_count / total END);"
-  add_ratio_1 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE one_vehicle_count / total END);"
-  add_ratio_2 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE two_vehicle_count / total END);"
-  add_ratio_3 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE three_vehicle_count / total END);"
+  add_ratio_1 = "ALTER TABLE household_vehicle_data ADD one_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE one_vehicle_count / total END);"
+  add_ratio_2 = "ALTER TABLE household_vehicle_data ADD two_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE two_vehicle_count / total END);"
+  add_ratio_3 = "ALTER TABLE household_vehicle_data ADD three_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE three_vehicle_count / total END);"
+  add_ratio_queries = [add_ratio_0, add_ratio_1, add_ratio_2, add_ratio_3]
 
   auto_increment = "ALTER TABLE household_vehicle_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
 
   conn.cursor().execute(drop)
   conn.cursor().execute(create_query)
+  for q in add_ratio_queries:
+    conn.cursor().execute(q)
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
