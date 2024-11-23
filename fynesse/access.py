@@ -473,7 +473,7 @@ def create_household_vehicle_index(conn):
   index_date_query = """CREATE INDEX household_vehicles_date USING HASH ON household_vehicle_data (census_date)"""
   index_latlong_query = """CREATE INDEX household_vehicles_latlong USING HASH ON household_vehicle_data (latitude, longitude)"""
   conn.cursor().execute(index_geography_query)
-  conn.cursor().execute(index_student_query)
+  conn.cursor().execute(index_ratio_query)
   conn.cursor().execute(index_date_query)
   conn.cursor().execute(index_latlong_query)
   conn.commit()
