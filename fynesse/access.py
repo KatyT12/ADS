@@ -446,10 +446,10 @@ def create_household_cars_data(conn):
   base_ratio_query = 'ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE count / total END);'
   
   
-  add_ratio_0 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE no_vehicle_count / total END);"
-  add_ratio_1 = "ALTER TABLE household_vehicle_data ADD one_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE one_vehicle_count / total END);"
-  add_ratio_2 = "ALTER TABLE household_vehicle_data ADD two_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE two_vehicle_count / total END);"
-  add_ratio_3 = "ALTER TABLE household_vehicle_data ADD three_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE three_vehicle_count / total END);"
+  add_ratio_0 = "ALTER TABLE household_vehicle_data ADD COLUMN no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE no_vehicle_count / total END);"
+  add_ratio_1 = "ALTER TABLE household_vehicle_data ADD COLUMN one_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE one_vehicle_count / total END);"
+  add_ratio_2 = "ALTER TABLE household_vehicle_data ADD COLUMN two_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE two_vehicle_count / total END);"
+  add_ratio_3 = "ALTER TABLE household_vehicle_data ADD COLUMN three_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE three_vehicle_count / total END);"
   add_ratio_queries = [add_ratio_0, add_ratio_1, add_ratio_2, add_ratio_3]
 
   auto_increment = "ALTER TABLE household_vehicle_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
