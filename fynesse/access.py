@@ -354,6 +354,8 @@ def create_nssec_table(conn):
             L13 INT UNSIGNED NOT NULL COMMENT 'Routine Occupations',
             L14 INT UNSIGNED NOT NULL COMMENT 'Never worked and long time unemployed',
             L15 INT UNSIGNED NOT NULL COMMENT 'Full time students',
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
@@ -372,9 +374,11 @@ def create_nssec_index(conn):
   index_geography_query = """CREATE INDEX nssec_geography_code USING HASH ON nssec_data (geography_code)"""
   index_student_query = """CREATE INDEX nssec_L15 USING HASH ON nssec_data (L15)"""
   index_date_query = """CREATE INDEX nssec_date USING HASH ON nssec_data (census_date)"""
+  index_latlong_query = """CREATE INDEX nssec_latlong USING HASH ON nssec_data (latitude, longitude)"""
   conn.cursor().execute(index_geography_query)
   conn.cursor().execute(index_student_query)
   conn.cursor().execute(index_date_query)
+  conn.cursor().execute(index_latlong_query)
   conn.commit()
 
 
@@ -436,17 +440,16 @@ def create_household_cars_data(conn):
             no_vehicle_count INT UNSIGNED NOT NULL,
             one_vehicle_count INT UNSIGNED NOT NULL,                      
             two_vehicle_count INT UNSIGNED NOT NULL,                      
-            three_vehicle_count INT UNSIGNED NOT NULL,                      
+            three_vehicle_count INT UNSIGNED NOT NULL,
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,                   
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
   add_primary_key = "ALTER TABLE household_vehicle_data ADD PRIMARY KEY (db_id)";
   
   cols = ['no_vehicle_count', 'one_vehicle_count', 'two_vehicle_count', 'three_vehicle_count']
-  base_ratio_query = 'ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE count / total END);'
   
-  
-
   base_ratio_query = "ALTER TABLE household_vehicle_data ADD COLUMN replace_ratio DOUBLE GENERATED ALWAYS AS (IF(total = 0, NULL, replace_count / total)) STORED;"
   add_ratio_0 = base_ratio_query.replace('replace','no_vehicle')
   add_ratio_1 = base_ratio_query.replace('replace','one_vehicle')
@@ -468,9 +471,11 @@ def create_household_vehicle_index(conn):
   index_geography_query = """CREATE INDEX household_vehicles_code USING HASH ON household_vehicle_data (geography_code)"""
   index_ratio_query = """CREATE INDEX household_vehicles_no_car_ratio USING HASH ON household_vehicle_data (no_vehicle_ratio)"""
   index_date_query = """CREATE INDEX household_vehicles_date USING HASH ON household_vehicle_data (census_date)"""
+  index_latlong_query = """CREATE INDEX household_vehicles_latlong USING HASH ON household_vehicle_data (latitude, longitude)"""
   conn.cursor().execute(index_geography_query)
-  conn.cursor().execute(index_ratio_query)
+  conn.cursor().execute(index_student_query)
   conn.cursor().execute(index_date_query)
+  conn.cursor().execute(index_latlong_query)
   conn.commit()
 
 def load_census_data_to_sql(conn, csv_file, table):
