@@ -432,12 +432,12 @@ def create_household_cars_data(conn):
           CREATE TABLE IF NOT EXISTS `household_vehicle_data` (
             census_date date NOT NULL,
             geography_code tinytext COLLATE utf8_bin NOT NULL,
-            total int(10) unsigned NOT NULL,
-            no_vehicle_count unsigned NOT NULL,
-            one_vehicle_count unsigned NOT NULL,                      
-            two_vehicle_count unsigned NOT NULL,                      
-            three_vehicle_count unsigned NOT NULL,                      
-            db_id bigint(20) unsigned NOT NULL
+            total INT UNSIGNED NOT NULL,
+            no_vehicle_count INT UNSIGNED NOT NULL,
+            one_vehicle_count INT UNSIGNED NOT NULL,                      
+            two_vehicle_count INT UNSIGNED NOT NULL,                      
+            three_vehicle_count INT UNSIGNED NOT NULL,                      
+            db_id bigint(20) INT UNSIGNED NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
   add_primary_key = "ALTER TABLE household_vehicle_data ADD PRIMARY KEY (db_id)";
