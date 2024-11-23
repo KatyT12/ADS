@@ -425,6 +425,41 @@ def create_oa_latlong_index(conn):
   conn.cursor().execute(index_latlong_query)
   conn.commit()
 
+
+def create_household_cars_data(conn):
+  drop = "DROP TABLE IF EXISTS household_vehicle_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `household_vehicle_data` (
+            census_date date NOT NULL,
+            geography_code tinytext COLLATE utf8_bin NOT NULL,
+            total int(10) unsigned NOT NULL,
+            no_vehicle_count unsigned NOT NULL,
+            one_vehicle_count unsigned NOT NULL,                      
+            two_vehicle_count unsigned NOT NULL,                      
+            three_vehicle_count unsigned NOT NULL,                      
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE household_vehicle_data ADD PRIMARY KEY (db_id)";
+  
+  add_ratio_0 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE no_vehicle_count / total END);"
+  add_ratio_1 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE one_vehicle_count / total END);"
+  add_ratio_2 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE two_vehicle_count / total END);"
+  add_ratio_3 = "ALTER TABLE household_vehicle_data ADD no_vehicle_ratio AS (CASE WHEN total = 0 THEN NULL ELSE three_vehicle_count / total END);"
+
+  auto_increment = "ALTER TABLE household_vehicle_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+def load_census_data_to_sql(conn, csv_file, table):
+  load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `{table}` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
+  conn.cursor().execute(load_query)
+  conn.commit()
+
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
     raise NotImplementedError
