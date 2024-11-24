@@ -131,7 +131,9 @@ def clean_geo_pp_data(con, pp_data, *dataframes_to_clean):
 def plot_pois_on_map(latitude, longitude, distance, tags, ax):
   n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
   pois = ox.geometries_from_bbox(tags=tags, north=n, south=s, east=e, west=w)
-  
+  if len(pois) == 0:
+    return
+
   tags_with_specific = list(tags.keys())
 
   pois['map_color'] = [(0,0,0)] * len(pois)
@@ -139,6 +141,7 @@ def plot_pois_on_map(latitude, longitude, distance, tags, ax):
   colors = [(0,0,0)]
   labels = ['None']
   
+
   for t in tags_with_specific:
       if t in pois.columns:
         if isinstance(tags[t], list):
