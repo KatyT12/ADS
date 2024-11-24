@@ -366,7 +366,7 @@ def extract_features_to_file(tags, output_file='england-filtered.osm.pbf', input
 class StopProcessing(Exception):
   pass
 
-class OSMUploader(osmium.SimpleHandler):
+class OSMUploader(osmium.SimpleHandler, connection):
     decoded_num = 0
     heart_beat = 50000
     tags = ['addr', ]
@@ -377,13 +377,14 @@ class OSMUploader(osmium.SimpleHandler):
         self.tags = tags
         self.nodes = []
         self.ways = []
+        self.connection = connection
         self.relations = []
 
     def upload_arr(self, arr, name):
       print(f"Uploading {len(arr)}")
       df_nodes = pd.DataFrame(arr)
       df_nodes.to_csv(name, index=False)
-      load_census_data_to_sql(connection, name, 'building_tag_data')
+      load_census_data_to_sql(self.connection, name, 'building_tag_data')
 
     def decide_stop(self):
       self.decoded_num += 1
