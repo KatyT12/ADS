@@ -167,6 +167,46 @@ def plot_pois_on_map(latitude, longitude, distance, tags, ax):
   pois.plot(ax=ax, alpha = 0.7, color = pois['map_color'], label = pois['map_label'].to_numpy())
   ax.legend(handles=legend_handles)
 
+
+# Plot the area and points of interest WITH student proportional population onto a graph
+#   :param longitude
+#   :param latitude
+#   :param distance: distance in km of the box
+#   :param tags
+#   :param ax: Axis to plot on
+def plot_location_students(connection, latitude, longitude, distance, with_labels=False, ax=None, tags={}):
+  df = coord_to_nssec_data(connection, latitude, longitude, distance)
+  df['student_proportion'] = df['L15']/df['total_over_16'].astype(float)
+
+  n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
+
+  # Retrieve geographical features
+  graph = ox.graph_from_bbox(bbox=(n, s, e, w))
+  nodes, edges = ox.graph_to_gdfs(graph)
+
+  # Split into percentiles
+  number = 10
+  green = np.array([0, 1, 0])
+  red = np.array([1, 0, 0])
+  colors = [ tuple(x) for x in np.linspace(green, red, number)]
+  df['colors'] = pd.qcut(df['student_proportion'].to_numpy(), number, labels=colors)
+
+  if ax is None:
+    fig, ax = plt.subplots(figsize=(10,10))
+  edges.plot(ax=ax, linewidth=1, edgecolor="dimgray")
+  ax.scatter(df['longitude'], df['latitude'], 100, c=df['colors'], alpha=1.0, zorder=10)
+
+  # Plot relevant buildings onto the map
+  
+  plot_pois_on_map(latitude, longitude, distance, tags, ax)
+  
+  # Annotate with output area labels
+  if with_labels:
+    for lat,lon, oa in df[['latitude', 'longitude', 'geography_code']].itertuples(index=False):
+      ax.annotate(oa, (float(lon)+0.00001, float(lat)+0.00001))
+
+  ax.set_title('Proportional student population mapped')
+
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
     df = access.data()
