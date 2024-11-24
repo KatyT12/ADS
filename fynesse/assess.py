@@ -16,6 +16,7 @@ import csv
 import pymysql
 import pandas as pd
 import numpy as np
+from matplotlib.lines import Line2D
 import re
 import matplotlib.pyplot as plt
 import osmnx as ox
@@ -120,36 +121,41 @@ def clean_geo_pp_data(con, pp_data, *dataframes_to_clean):
 
   con.commit()
 
+
 # Plot the area and points of interest onto a graph
 #   :param longitude
 #   :param latitude
 #   :param distance: distance in km of the box
-#   :param place_name
-#   :param pois_and_colours, the points of interest you want to include, and their colour on the map
-def plot_location(longitude, latitude, distance, place_name, *pois_and_colours):
-  n, s, e, w = get_bounding_box(latitude, longitude, 2)
-  graph = ox.graph_from_bbox(n, s, e, w, tags)
-  nodes, edges = ox.graph_to_gdfs(graph)
+#   :param tags
+#   :param ax: Axis to plot on
+def plot_pois_on_map(latitude, longitude, distance, tags, ax):
+  n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
+  pois = ox.geometries_from_bbox(tags=tags, north=n, south=s, east=e, west=w)
+  
+  tags_with_specific = list(tags.keys())
 
-  area = ox.geocode_to_gdf(place_name.lower())
-
-  fig, ax = plt.subplots(figsize=(16, 8))
-  area.plot(ax=ax, facecolor="white")
-  edges.plot(ax=ax, linewidth=1, edgecolor="dimgray")
-
-  ax.set_xlim([w, e])
-  ax.set_ylim([s, n])
-
-  ax.set_xlabel("longitude")
-  ax.set_ylabel("latitude")
-
-
-  for (x, c) in pois_and_colours:
-    
-    x.plot(ax=ax, color = c, alpha = 0.7)
-  plt.tight_layout()
-  plt.show()
-
+  pois['map_color'] = [(0,0,0)] * len(pois)
+  pois['map_label'] = 'None'
+  colors = [(0,0,0)]
+  labels = ['None']
+  
+  for t in tags_with_specific:
+      if t in pois.columns:
+        if isinstance(tags[t], list):
+          for v in tags[t]:
+            cond = pois[pois[t].notnull()][t] == v
+            col = tuple(np.random.rand(3,))
+            pois.loc[cond, 'map_color'] = pois[cond].apply(lambda _: col, axis=1)
+            pois.loc[cond, 'map_label'] = v
+            colors.append(col)
+            labels.append(v)
+        else:
+          cond = pois[t].notnull()
+          col = tuple(np.random.rand(3,))
+          pois.loc[cond, 'map_label'] = t
+          pois.loc[cond, 'map_color'] = pois[cond].apply(lambda _: col, axis=1)
+          colors.append(col)
+          labels.append(v)
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
