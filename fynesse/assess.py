@@ -156,6 +156,10 @@ def plot_pois_on_map(latitude, longitude, distance, tags, ax):
           pois.loc[cond, 'map_color'] = pois[cond].apply(lambda _: col, axis=1)
           colors.append(col)
           labels.append(v)
+  
+  legend_handles = [Line2D([0], [0], color=color, lw=4, label=label) for color, label in zip(colors, labels)]
+  pois.plot(ax=ax, alpha = 0.7, color = pois['map_color'], label = pois['map_label'].to_numpy())
+  ax.legend(handles=legend_handles)
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
