@@ -366,13 +366,13 @@ def extract_features_to_file(tags, output_file='england-filtered.osm.pbf', input
 class StopProcessing(Exception):
   pass
 
-class OSMUploader(osmium.SimpleHandler, connection):
+class OSMUploader(osmium.SimpleHandler):
     decoded_num = 0
     heart_beat = 50000
     tags = ['addr', ]
     
 
-    def __init__(self, tags):
+    def __init__(self, tags, connection):
         super().__init__()
         self.tags = tags
         self.nodes = []
