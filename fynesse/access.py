@@ -493,7 +493,7 @@ def create_building_tag_table(conn):
             latitude decimal(11,8) NOT NULL,
             longitude decimal(10,8) NOT NULL,
             tag VARCHAR(100) NOT NULL,
-            extra VARCHAR(200) NULLABLE,
+            extra VARCHAR(200) NULL,
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
