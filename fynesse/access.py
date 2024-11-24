@@ -483,6 +483,29 @@ def load_census_data_to_sql(conn, csv_file, table):
   conn.cursor().execute(load_query)
   conn.commit()
 
+
+# OSM
+def create_building_tag_table(conn):
+  drop = "DROP TABLE IF EXISTS building_tag_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `building_tag_data` (
+            osm_date date NOT NULL,
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,
+            tag VARCHAR(100) NOT NULL,
+            extra VARCHAR(200) NULLABLE,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE building_tag_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE building_tag_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""
     raise NotImplementedError
