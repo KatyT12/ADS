@@ -129,26 +129,29 @@ def clean_geo_pp_data(con, pp_data, *dataframes_to_clean):
 #   :param tags
 #   :param ax: Axis to plot on
 def plot_pois_on_map(latitude, longitude, distance, tags, ax):
-  n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
-  pois = ox.geometries_from_bbox(tags=tags, north=n, south=s, east=e, west=w)
+  n, s, e, w = get_bounding_box(latitude, longitude, distance)
+  try:
+    pois = ox.geometries_from_bbox(tags=tags, north=n, south=s, east=e, west=w)
+  except Exception:
+    return
   if len(pois) == 0:
     return
 
   tags_with_specific = list(tags.keys())
-
   pois['map_color'] = [(0,0,0)] * len(pois)
   pois['map_label'] = 'None'
   colors = [(0,0,0)]
   labels = ['None']
-  
 
   for t in tags_with_specific:
       if t in pois.columns:
         if isinstance(tags[t], list):
           for v in tags[t]:
-            cond = pois[pois[t].notnull()][t] == v
+            cond = (pois[t].notnull()) & (pois[t] == v)
+            
             col = tuple(np.random.rand(3,))
             pois.loc[cond, 'map_color'] = pois[cond].apply(lambda _: col, axis=1)
+            
             pois.loc[cond, 'map_label'] = v
             colors.append(col)
             labels.append(v)
@@ -158,7 +161,7 @@ def plot_pois_on_map(latitude, longitude, distance, tags, ax):
           pois.loc[cond, 'map_label'] = t
           pois.loc[cond, 'map_color'] = pois[cond].apply(lambda _: col, axis=1)
           colors.append(col)
-          labels.append(v)
+          labels.append(t)
   
   legend_handles = [Line2D([0], [0], color=color, lw=4, label=label) for color, label in zip(colors, labels)]
   pois.plot(ax=ax, alpha = 0.7, color = pois['map_color'], label = pois['map_label'].to_numpy())
