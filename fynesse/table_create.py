@@ -143,7 +143,7 @@ def create_tenure_data(conn):
           CREATE TABLE IF NOT EXISTS `tenure_data` (
             census_date date NOT NULL,
             geography_code tinytext COLLATE utf8_bin NOT NULL,
-            total unsigned INT UNSIGNED NOT NULL,
+            total INT UNSIGNED NOT NULL,
             count_owned INT UNSIGNED NOT NULL,
             count_social_rented INT UNSIGNED NOT NULL,
             count_private_rented INT UNSIGNED NOT NULL,
