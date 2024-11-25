@@ -454,16 +454,15 @@ def upload_with_handler(handler, file_name, tags):
     handler.upload_arr(handler.ways, 'ways_extracted.csv')
 
 
-def create_count_table(conn, distance, tags):
+def create_count_table(conn, distance, tags_excluded):
    name = 'code_count_table'
    drop = f"DROP TABLE IF EXISTS {name}"
    
    
    lat_dist, lon_dist = latlong_to_km(52.5152422, -1.1482686, distance/2, distance/2)
-   
    query = f'''
    create table {name} as
-   select geography_code, tag, count(*) from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist}) group by geography_code, tag
+   select geography_code, tag, count(*) from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag
    '''
 
    print(query)
