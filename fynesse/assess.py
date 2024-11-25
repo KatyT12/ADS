@@ -208,15 +208,70 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
   ax.set_title('Proportional student population mapped')
 
 
+#---------------------------------------------------- Code for querying training data
+
 
 def query_random_set(conn, number, table):
-  query = f'select * from {table} order by rand ( ) limit {number};'
+  query = f'''
+    with codes AS (
+        select geography_code
+        FROM code_count_table
+        GROUP BY geography_code
+        order by rand ()
+        limit {number}
+    )
+    select *
+    from code_count_table as cc
+    join household_vehicle_data as hv on hv.geography_code = cc.geography_code 
+    join nssec_data as ns on ns.geography_code = cc.geography_code 
+    WHERE cc.geography_code IN (SELECT * FROM codes);
+  '''
   cur = conn.cursor()
   cur.execute(query)
   column_names = [x[0] for x in cur.description]
   df = pd.DataFrame(columns=column_names, data=cur.fetchall())
+  df = df.loc[:,~df.columns.duplicated()].copy()
   return df
 
+
+def query_training_for_location(conn, latitude, longitude, distance):
+  
+  #lat_dist, lon_dist = fynesse.access.latlong_to_km(52.5152422, -1.1482686, distance, distance)
+  n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
+
+  query = f'''
+    with codes AS (
+        select geography_code
+        FROM nssec_data
+        where latitude between {s} and {n} and longitude between {w} and {e}
+        GROUP BY geography_code
+    )
+    select *
+    from code_count_table as cc
+    join household_vehicle_data as hv on hv.geography_code = cc.geography_code 
+    join nssec_data as ns on ns.geography_code = cc.geography_code 
+    WHERE cc.geography_code IN (SELECT * FROM codes);
+  '''
+  cur = conn.cursor()
+  cur.execute(query)
+  column_names = [x[0] for x in cur.description]
+  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
+  df = df.loc[:,~df.columns.duplicated()].copy()
+  return df
+
+
+# Extract data from the database into a useful table that can be used for training and finding correlations
+def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_ratio', 'two_vehicle_ratio']):
+  df = df.loc[:,~df.columns.duplicated()].copy()
+  codes = df['geography_code'].drop_duplicates()
+  osm_tags = df['tag'].drop_duplicates()
+  result = df.pivot(index='geography_code', columns='tag', values='count(*)').reset_index()
+  for t in osm_tags:
+    result.loc[result[t].isnull(), t] = 0
+
+  result = result.merge(df[['geography_code', *census_tags, 'L15', 'total_over_16']].drop_duplicates(), left_on='geography_code', right_on='geography_code')
+  result['training'] = result['L15']/result['total_over_16']
+  return result
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
