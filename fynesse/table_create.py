@@ -167,7 +167,7 @@ def create_building_tag_index(conn):
   index_date_query = """CREATE INDEX building_tag_date USING HASH ON building_tag_data (osm_date)"""
   index_latlong_query = """CREATE INDEX building_tag_latlong USING HASH ON building_tag_data (latitude, longitude)"""
   index_tag_query = """CREATE INDEX building_tag_tag USING HASH ON building_tag_data (tag)"""
-  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_date_query)
   conn.cursor().execute(index_latlong_query)
   conn.cursor().execute(index_tag_query)
   conn.commit()
