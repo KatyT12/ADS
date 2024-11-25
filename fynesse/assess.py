@@ -209,7 +209,7 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
 
 
 
-def query_random_set(connection, number, table):
+def query_random_set(conn, number, table):
   query = f'select * from {table} order by rand ( ) limit {number};'
   cur = conn.cursor()
   cur.execute(query)
