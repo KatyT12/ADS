@@ -336,15 +336,6 @@ def create_credentials():
         yaml.dump(credentials_dict, file)
 
 
-
-
-# Load to the NSSEC table
-def load_nssec_to_sql(conn, csv_file):
-    load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
-    conn.cursor().execute(load_query)
-    conn.commit()
-
-
 #****************************** Extracting, filtering and uploading OSM data to an SQl database
 
 # Filter out a pbf file to just the tags of interest
@@ -462,7 +453,16 @@ def upload_with_handler(handler, file_name, tags):
   if len(handler.ways) > 0:
     handler.upload_arr(handler.ways, 'ways_extracted.csv')
 
-
+def create_count_view(conn, distance, tags):
+   name = 'code_count_view'
+   drop = "DROP TABLE IF EXISTS {name}"
+   
+   lat_dist, lon_dist = latlong_to_km(52.5152422, -1.1482686, distance, distance)
+   
+   query = f'''
+   CREATE VIEW {name} AS
+   select geography_code, tag, count(*) from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist}) group by geography_code, tag
+   '''
 
 
 def data():
