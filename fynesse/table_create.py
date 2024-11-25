@@ -149,6 +149,7 @@ def create_tenure_data(conn):
             count_private_rented INT UNSIGNED NOT NULL,
             count_private_agency INT UNSIGNED NOT NULL,
             count_private_other INT UNSIGNED NOT NULL,
+            count_rent_free INT UNSIGNED NOT NULL,
             latitude decimal(11,8) NOT NULL,
             longitude decimal(10,8) NOT NULL,                   
             db_id bigint(20) unsigned NOT NULL
