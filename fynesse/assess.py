@@ -207,6 +207,17 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
 
   ax.set_title('Proportional student population mapped')
 
+
+
+def query_random_set(connection, number, table):
+  query = f'select * from {table} order by rand ( ) limit {number};'
+  cur = conn.cursor()
+  cur.execute(query)
+  column_names = [x[0] for x in cur.description]
+  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
+  return df
+
+
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
     df = access.data()
