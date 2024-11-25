@@ -454,7 +454,7 @@ def upload_with_handler(handler, file_name, tags):
     handler.upload_arr(handler.ways, 'ways_extracted.csv')
 
 def create_count_table(conn, distance, tags):
-   name = 'code_count_view'
+   name = 'code_count_table'
    drop = f"DROP TABLE IF EXISTS {name}"
    
    
