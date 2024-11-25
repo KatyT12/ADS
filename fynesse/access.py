@@ -463,6 +463,9 @@ def create_count_view(conn, distance, tags):
    CREATE VIEW {name} AS
    select geography_code, tag, count(*) from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist}) group by geography_code, tag
    '''
+   conn.cursor().execute(drop)
+   conn.cursor().execute(query)
+   conn.commit()
 
 
 def data():
