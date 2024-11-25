@@ -163,7 +163,7 @@ def create_building_tag_table(conn):
   conn.commit()
 
 
-def create_nssec_index(conn):
+def create_building_tag_index(conn):
   index_date_query = """CREATE INDEX building_tag_date USING HASH ON building_tag_data (osm_date)"""
   index_latlong_query = """CREATE INDEX building_tag_latlong USING HASH ON building_tag_data (latitude, longitude)"""
   index_tag_query = """CREATE INDEX building_tag_tag USING HASH ON building_tag_data (tag)"""
