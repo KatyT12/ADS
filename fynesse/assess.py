@@ -211,7 +211,7 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
 #---------------------------------------------------- Code for querying training data
 
 
-def query_random_set(conn, number, table):
+def query_random_set(conn, number, table='household_vehicle_data'):
   query = f'''
     with codes AS (
         select geography_code
@@ -222,7 +222,7 @@ def query_random_set(conn, number, table):
     )
     select *
     from code_count_table as cc
-    join household_vehicle_data as hv on hv.geography_code = cc.geography_code 
+    join {table} as hv on hv.geography_code = cc.geography_code 
     join nssec_data as ns on ns.geography_code = cc.geography_code 
     WHERE cc.geography_code IN (SELECT * FROM codes);
   '''
@@ -234,7 +234,7 @@ def query_random_set(conn, number, table):
   return df
 
 
-def query_training_for_location(conn, latitude, longitude, distance):
+def query_training_for_location(conn, latitude, longitude, distance, table='household_vehicle_data'):
   
   #lat_dist, lon_dist = fynesse.access.latlong_to_km(52.5152422, -1.1482686, distance, distance)
   n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
@@ -248,7 +248,7 @@ def query_training_for_location(conn, latitude, longitude, distance):
     )
     select *
     from code_count_table as cc
-    join household_vehicle_data as hv on hv.geography_code = cc.geography_code 
+    join {table} as hv on hv.geography_code = cc.geography_code 
     join nssec_data as ns on ns.geography_code = cc.geography_code 
     WHERE cc.geography_code IN (SELECT * FROM codes);
   '''
