@@ -135,6 +135,35 @@ def load_census_data_to_sql(conn, csv_file, table):
   conn.cursor().execute(load_query)
   conn.commit()
 
+
+
+def create_tenure_data(conn):
+  drop = "DROP TABLE IF EXISTS tenure_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `tenure_data` (
+            census_date date NOT NULL,
+            geography_code tinytext COLLATE utf8_bin NOT NULL,
+            total unsigned INT UNSIGNED NOT NULL,
+            count_owned INT UNSIGNED NOT NULL,
+            count_social_rented INT UNSIGNED NOT NULL,
+            count_private_rented INT UNSIGNED NOT NULL,
+            count_private_agency INT UNSIGNED NOT NULL,
+            count_private_other INT UNSIGNED NOT NULL,
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,                   
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE tenure_data ADD PRIMARY KEY (db_id)";
+  
+  auto_increment = "ALTER TABLE tenure_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
 # Load to the NSSEC table
 def load_nssec_to_sql(conn, csv_file):
     load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
