@@ -135,6 +135,11 @@ def load_census_data_to_sql(conn, csv_file, table):
   conn.cursor().execute(load_query)
   conn.commit()
 
+# Load to the NSSEC table
+def load_nssec_to_sql(conn, csv_file):
+    load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `nssec_data` FIELDS TERMINATED BY ',' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
+    conn.cursor().execute(load_query)
+    conn.commit()
 
 # OSM
 def create_building_tag_table(conn):
@@ -155,4 +160,14 @@ def create_building_tag_table(conn):
   conn.cursor().execute(create_query)
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
+  conn.commit()
+
+
+def create_nssec_index(conn):
+  index_date_query = """CREATE INDEX building_tag_date USING HASH ON building_tag_data (osm_date)"""
+  index_latlong_query = """CREATE INDEX building_tag_latlong USING HASH ON building_tag_data (latitude, longitude)"""
+  index_tag_query = """CREATE INDEX building_tag_tag USING HASH ON building_tag_data (tag)"""
+  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_latlong_query)
+  conn.cursor().execute(index_tag_query)
   conn.commit()
