@@ -197,7 +197,7 @@ def create_transport_data(conn):
   conn.commit()
 
 
-def create_nssec_index(conn):
+def create_transport_index(conn):
   index_geography_query = """CREATE INDEX transport_code USING HASH ON transport_data (geography_code)"""
   index_date_query = """CREATE INDEX transport_date USING HASH ON transport_data (census_date)"""
   index_latlong_query = """CREATE INDEX transport_latlong USING HASH ON transport_data (latitude, longitude)"""
