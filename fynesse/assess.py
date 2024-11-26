@@ -280,11 +280,11 @@ def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_rati
   for t in osm_tags:
     result.loc[result[t].isnull(), t] = 0
 
-  result = result.merge(df[['geography_code', *census_tags, 'L15', 'total_over_16']].drop_duplicates(), left_on='geography_code', right_on='geography_code')
-
   if pred_var == 'L15':
+    result = result.merge(df[['geography_code', *census_tags, 'L15', 'total_over_16']].drop_duplicates(), left_on='geography_code', right_on='geography_code')
     result['training'] = result['L15']/result['total_over_16']
   else:
+    result = result.merge(df[['geography_code', *census_tags, pred_var]].drop_duplicates(), left_on='geography_code', right_on='geography_code')
     result['training'] = result[pred_var]
   return result
 
