@@ -158,12 +158,54 @@ def create_tenure_data(conn):
   add_primary_key = "ALTER TABLE tenure_data ADD PRIMARY KEY (db_id)";
   
   auto_increment = "ALTER TABLE tenure_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  
 
   conn.cursor().execute(drop)
   conn.cursor().execute(create_query)
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
+
+
+def create_transport_data(conn):
+  drop = "DROP TABLE IF EXISTS transport_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `transport_data` (
+            census_date date NOT NULL,
+            geography_code tinytext COLLATE utf8_bin NOT NULL,
+            total INT UNSIGNED NOT NULL,
+            public_tranport_count INT UNSIGNED NOT NULL,
+            cycle_count INT UNSIGNED NOT NULL,
+            foot_count INT UNSIGNED NOT NULL,
+            other_count INT UNSIGNED NOT NULL,
+            latitude decimal(11,8) NOT NULL,
+            longitude decimal(10,8) NOT NULL,                   
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE transport_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE transport_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+  ratio_query = "ALTER TABLE transport_data ADD COLUMN cycle_ratio DOUBLE GENERATED ALWAYS AS (IF(total = 0, NULL, cycle_count / total)) STORED;"
+
+
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(ratio_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+
+def create_nssec_index(conn):
+  index_geography_query = """CREATE INDEX transport_code USING HASH ON transport_data (geography_code)"""
+  index_date_query = """CREATE INDEX transport_date USING HASH ON transport_data (census_date)"""
+  index_latlong_query = """CREATE INDEX transport_latlong USING HASH ON transport_data (latitude, longitude)"""
+  conn.cursor().execute(index_geography_query)
+  conn.cursor().execute(index_date_query)
+  conn.cursor().execute(index_latlong_query)
+  conn.commit()
+
 
 # Load to the NSSEC table
 def load_nssec_to_sql(conn, csv_file):
