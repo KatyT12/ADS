@@ -131,7 +131,7 @@ def clean_geo_pp_data(con, pp_data, *dataframes_to_clean):
 def plot_pois_on_map(latitude, longitude, distance, tags, ax):
   n, s, e, w = get_bounding_box(latitude, longitude, distance)
   try:
-    pois = ox.geometries_from_bbox(tags=tags, north=n, south=s, east=e, west=w)
+    pois = ox.features_from_bbox(tags=tags, bbox=(w, s, e, n))
   except Exception:
     return
   if len(pois) == 0:
@@ -185,7 +185,7 @@ def coord_to_nssec_data(connection, latitude, longitude, distance_km=0.5):
 #   :param distance: distance in km of the box
 #   :param tags
 #   :param ax: Axis to plot on
-def plot_location_students(connection, latitude, longitude, distance, with_labels=False, ax=None, tags={}):
+def plot_location_students(connection, latitude, longitude, distance, location = '', with_labels=False, ax=None, tags={}):
   df = coord_to_nssec_data(connection, latitude, longitude, distance)
   df['student_proportion'] = df['L15']/df['total_over_16'].astype(float)
 
@@ -216,7 +216,7 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
     for lat,lon, oa in df[['latitude', 'longitude', 'geography_code']].itertuples(index=False):
       ax.annotate(oa, (float(lon)+0.00001, float(lat)+0.00001))
 
-  ax.set_title('Proportional student population mapped')
+  ax.set_title('Proportional student population mapped at ' + location)
 
 
 #---------------------------------------------------- Code for querying training data
