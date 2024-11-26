@@ -168,6 +168,17 @@ def plot_pois_on_map(latitude, longitude, distance, tags, ax):
   ax.legend(handles=legend_handles)
 
 
+
+def coord_to_nssec_data(connection, latitude, longitude, distance_km=0.5):
+  n, s, e, w = fynesse.access.get_bounding_box(latitude, longitude, distance_km)
+  cur = connection.cursor()
+  cur.execute(f'select geography_code, longitude, latitude, L15, total_over_16 from nssec_data where latitude between {s} and {n} and longitude between {w} and {e}')
+
+  column_names = list(map(lambda x: x[0], cur.description))
+  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
+  return df
+  
+
 # Plot the area and points of interest WITH student proportional population onto a graph
 #   :param longitude
 #   :param latitude
