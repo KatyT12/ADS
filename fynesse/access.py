@@ -459,7 +459,7 @@ def create_count_table(conn, distance, tags_excluded):
    drop = f"DROP TABLE IF EXISTS {name}"
    
    
-   tags_list = [ f'\'{s}\'' for s in flatten_tags(tags_filter)]
+   tags_list = [ f'\'{s}\'' for s in flatten_tags(tags_excluded)]
    tag_string = '(' + ', '.join(tags_list) + ')'
 
    lat_dist, lon_dist = latlong_to_km(52.5152422, -1.1482686, distance/2, distance/2)
