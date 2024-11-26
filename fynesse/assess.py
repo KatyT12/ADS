@@ -192,7 +192,7 @@ def plot_location_students(connection, latitude, longitude, distance, with_label
   n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
 
   # Retrieve geographical features
-  graph = ox.graph_from_bbox(bbox=(n, s, e, w))
+  graph = ox.graph_from_bbox(bbox=(w, s, e, n))
   nodes, edges = ox.graph_to_gdfs(graph)
 
   # Split into percentiles
