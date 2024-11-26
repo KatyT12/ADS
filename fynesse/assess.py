@@ -276,7 +276,7 @@ def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_rati
   df = df.loc[:,~df.columns.duplicated()].copy()
   codes = df['geography_code'].drop_duplicates()
   osm_tags = df['tag'].drop_duplicates()
-  result = df.pivot(index='geography_code', columns='tag', values='count(*)').reset_index()
+  result = df.pivot(index='geography_code', columns='tag', values='count').reset_index()
   for t in osm_tags:
     result.loc[result[t].isnull(), t] = 0
 
