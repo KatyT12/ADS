@@ -349,7 +349,7 @@ def extract_features_to_file(tags, output_file='england-filtered.osm.pbf', input
       filter_string += f' "{t}=*",'
   filter_string = filter_string[:-1]
 
-  command = f'osmium tags-filter {input_file} {filter_string} --overwrite -o {output_file}'  
+  command = f'osmium tags-filter {input_file} {filter_string} -o {output_file}'  
   print(f'Running: {command}')
   os.system(command)
 
