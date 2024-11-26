@@ -468,6 +468,7 @@ def create_count_table(conn, distance, tags_excluded):
    create table {name} as
    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag
    '''
+   
    query = f'''
    create table {name} as
    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join (select * from building_tag_data where tag in {tag_string}) as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag
@@ -484,8 +485,13 @@ def insert_into_count_table(conn, distance, tags_filter):
   tag_string = '(' + ', '.join(tags_list) + ')'
   
   query = f"""
-      insert into code_count_table (geography_code, tag, count, distance)
-      select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join (select * from building_tag_data where tag in {tag_string}) as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;
+    with tagged AS (
+        select *
+        FROM building_tag_data
+        where tag in {tag_string}
+    )
+    insert into code_count_table (geography_code, tag, count, distance)
+    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;
   """
   print(query)
   conn.cursor().execute(query)
