@@ -493,23 +493,30 @@ def insert_into_count_table(conn, distance, tags_filter):
     FROM building_tag_data
     WHERE tag in {tag_string};
   '''
-
   index = 'CREATE INDEX tagged_temporary_latlong USING HASH ON tagged_temporary (latitude, longitude);'
+  
 
-  query2 = f"""
-    insert into code_count_table (geography_code, tag, count, distance)
-    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged_temporary as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;
-  """
   print(drop)
   conn.cursor().execute(drop)
   print(query1)
   conn.cursor().execute(query1)
   print(index)
   conn.cursor().execute(index)
-  print(query2)
-  conn.cursor().execute(query2)
-  conn.commit()
+  
+  upload = f'select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged_temporary as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;'
+  print(upload)
 
+  cur.execute(upload)
+  rows = cur.fetchall()
+  csv_file_path = 'output_file.csv'
+
+  print('Finished join')
+  with open(csv_file_path, 'w', newline='') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerows(rows)
+  
+  cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path + "' INTO TABLE `code_count_table` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
+  con.commit()
 
 
 def data():
