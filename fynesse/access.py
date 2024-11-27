@@ -484,12 +484,26 @@ def insert_into_count_table(conn, distance, tags_filter):
   tags_list = [ f'\'{s}\'' for s in flatten_tags(tags_filter)]
   tag_string = '(' + ', '.join(tags_list) + ')'
   
-  query = f"""
+
+  drop = '''drop temporary table if exists tagged_temporary;'''
+
+  query1 = f'''
+    create temporary table tagged_temporary AS
+    SELECT *
+    FROM building_tag_data
+    WHERE tag in {tag_string};
+  '''
+
+  query2 = f"""
     insert into code_count_table (geography_code, tag, count, distance)
-    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join building_tag_data as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist}) where tag in {tag_string} group by geography_code, tag;
+    select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged_temporary as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;
   """
-  print(query)
-  conn.cursor().execute(query)
+  print(drop)
+  conn.cursor().execute(drop)
+  print(query1)
+  conn.cursor().execute(query1)
+  print(query2)
+  conn.cursor().execute(query2)
   conn.commit()
 
 
