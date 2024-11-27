@@ -494,6 +494,8 @@ def insert_into_count_table(conn, distance, tags_filter):
     WHERE tag in {tag_string};
   '''
 
+  index = 'CREATE INDEX tagged_temporary_latlong USING HASH ON tagged_temporary (latitude, longitude);'
+
   query2 = f"""
     insert into code_count_table (geography_code, tag, count, distance)
     select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged_temporary as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;
@@ -502,6 +504,8 @@ def insert_into_count_table(conn, distance, tags_filter):
   conn.cursor().execute(drop)
   print(query1)
   conn.cursor().execute(query1)
+  print(index)
+  conn.cursor().execute(index)
   print(query2)
   conn.cursor().execute(query2)
   conn.commit()
