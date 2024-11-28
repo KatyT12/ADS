@@ -221,6 +221,13 @@ def plot_location_students(connection, latitude, longitude, distance, location =
 
 #---------------------------------------------------- Code for querying training data
 
+def query_to_dataframe(conn, query):
+  cur = conn.cursor()
+  cur.execute(query)
+  column_names = [x[0] for x in cur.description]
+  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
+  df = df.loc[:,~df.columns.duplicated()].copy()
+  return df
 
 def query_random_set(conn, number, table='household_vehicle_data', pred_table='nssec_data'):
   query = f'''
@@ -237,12 +244,8 @@ def query_random_set(conn, number, table='household_vehicle_data', pred_table='n
     join {pred_table} as ns on ns.geography_code = cc.geography_code 
     WHERE cc.geography_code IN (SELECT * FROM codes);
   '''
-  cur = conn.cursor()
-  cur.execute(query)
-  column_names = [x[0] for x in cur.description]
-  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
-  df = df.loc[:,~df.columns.duplicated()].copy()
-  return df
+  return query_to_dataframe(conn, query)
+
 
 
 def query_training_for_location(conn, latitude, longitude, distance, table='household_vehicle_data', pred_table='nssec_data'):
@@ -263,12 +266,9 @@ def query_training_for_location(conn, latitude, longitude, distance, table='hous
     join {pred_table} as ns on ns.geography_code = cc.geography_code 
     WHERE cc.geography_code IN (SELECT * FROM codes);
   '''
-  cur = conn.cursor()
-  cur.execute(query)
-  column_names = [x[0] for x in cur.description]
-  df = pd.DataFrame(columns=column_names, data=cur.fetchall())
-  df = df.loc[:,~df.columns.duplicated()].copy()
-  return df
+  return query_to_dataframe(conn, query)
+
+
 
 
 # Extract data from the database into a useful table that can be used for training and finding correlations
