@@ -246,7 +246,14 @@ def query_random_set(conn, number, table='household_vehicle_data', pred_table='n
   '''
   return query_to_dataframe(conn, query)
 
-
+def random_query_table(conn, number, table):
+  query = f'''
+    select *
+    from {table}
+    order by rand ()
+    limit {number}
+  '''
+  return query_to_dataframe(conn, query)
 
 def query_training_for_location(conn, latitude, longitude, distance, table='household_vehicle_data', pred_table='nssec_data'):
   
