@@ -257,6 +257,7 @@ def create_postcode_to_areas(conn):
             lad21 VARCHAR(10) NOT NULL,
             lad23 VARCHAR(10) NOT NULL,
             lad_name VARCHAR(40) NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
   add_primary_key = "ALTER TABLE postcode_area_data ADD PRIMARY KEY (db_id)";
