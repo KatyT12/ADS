@@ -267,3 +267,13 @@ def create_postcode_to_areas(conn):
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
+
+  
+def create_postcode_to_area_index(conn):
+  index_postcode = """CREATE INDEX idx_postcode_area_postcode USING HASH ON postcode_area_data (postcode)"""
+  index_output_area = """CREATE INDEX idx_postcode_area_oa USING HASH ON postcode_area_data (oa21)"""
+  index_lad = """CREATE INDEX idx_postcode_area_lad USING HASH ON postcode_area_data (lad23)"""
+  conn.cursor().execute(index_postcode)
+  conn.cursor().execute(index_output_area)
+  conn.cursor().execute(index_lad)
+  conn.commit()
