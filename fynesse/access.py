@@ -37,6 +37,21 @@ def download_arbitrary_csv(url, file_name):
                 file.write(response.content)
 
 
+# Download and extract a file
+def download_and_unzip(url, file_name, zip_name, location='.', ):
+  dir = location
+  os.makedirs(dir, exist_ok = True)
+
+  response = requests.get(url)
+  if response.status_code == 200:
+      with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+        z.extract(zip_name, dir)
+        os.rename(dir + '/' + zip_name, dir + '/' + file_name)
+
+  if os.path.exists(dir) and os.listdir(dir):
+    print(f"Files already exist at: {dir}.")
+    return
+
 # A function to create a connection to any SQL database
 """ Create a database connection to the MariaDB database
         specified by the host url and database name.
@@ -517,6 +532,57 @@ def insert_into_count_table(conn, distance, tags_filter):
   
   cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path + "' INTO TABLE `code_count_table` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
   con.commit()
+
+
+
+
+# Census download, clean data
+def remove_columns_from_df(csv_file, columns, path='.'):
+    full = path + '/' + csv_file
+    data = pd.read_csv(full)
+    df = data.drop(columns, axis=1)
+    return df
+
+# Cleaning nssec data as specified, a base function for setting up any census data
+def clean_census_data(csv_files, mapping_df, path='.'):
+  for f in csv_files:
+    full = path + '/' + f
+    df = remove_columns_from_df(f, ['geography code'], path=path)
+    df['date'] = df['date'].astype(str)
+    df['date'] += '-01-01'
+
+    # Add latitude and longitude data to avoid a join
+    merged_df = pd.merge(df, mapping_df[['OA21CD', 'LAT', 'LONG']], left_on='geography', right_on='OA21CD', how='left')
+    merged_df = merged_df.rename({'LAT': 'latitude', 'LONG': 'longitude'}, axis=1)
+    merged_df = merged_df.drop('OA21CD', axis=1)
+
+    merged_df.to_csv(full, index=False)
+
+def clean_output_coords(csv_file, year, path='.'):
+  df = remove_columns_from_df(csv_file, ['FID', 'BNG_E', 'BNG_N', 'LSOA21NMW', 'GlobalID'])
+  # Add date
+  df.insert(0, 'date', str(year) + '-01-01')
+  df.to_csv(csv_file, index=False)
+
+
+def download_census_data(c_type, code, years, base='.'):
+  base_url = f'https://www.nomisweb.co.uk/output/census/year/census2021-{c_type.lower()}.zip'
+  dir = os.path.join(base, 'census-'+c_type.lower())
+
+  os.makedirs(dir, exist_ok = True)
+  for year in years:
+    url = base_url.replace('year', year)
+    response = requests.get(url)
+
+    if response.status_code == 200:
+      file = os.path.splitext(os.path.basename(url))[0] + '-' + code + '.csv'
+      with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+        z.extract(file, dir)
+        os.rename(dir + '/' + file, f'{dir}/{year}-{code}.csv')
+
+  if os.path.exists(dir) and os.listdir(dir):
+    print(f"Files already exist at: {dir}.")
+    return
 
 
 def data():
