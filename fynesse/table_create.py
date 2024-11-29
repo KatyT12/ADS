@@ -243,3 +243,26 @@ def create_building_tag_index(conn):
   conn.cursor().execute(index_latlong_query)
   conn.cursor().execute(index_tag_query)
   conn.commit()
+
+
+# pcd8 	oa21cd 	lsoa21cd 	msoa21cd 	ladcd 	LAD23CD 	LAD23NM
+def create_postcode_to_areas(conn):
+  drop = "DROP TABLE IF EXISTS postcode_area_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `postcode_area_data` (
+            postcode VARCHAR(15) NOT NULL,
+            oa21 VARCHAR(10) NOT NULL,
+            lsoa21 VARCHAR(10) NOT NULL,
+            msoa21 VARCHAR(10) NOT NULL,
+            lad21 VARCHAR(10) NOT NULL,
+            lad23 VARCHAR(10) NOT NULL,
+            lad_name VARCHAR(40) NOT NULL,
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE postcode_area_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE postcode_area_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
