@@ -277,3 +277,27 @@ def create_postcode_to_area_index(conn):
   conn.cursor().execute(index_output_area)
   conn.cursor().execute(index_lad)
   conn.commit()
+
+
+def create_new_build_oa(conn):
+  drop = "DROP TABLE IF EXISTS new_build_oa_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `new_build_oa_data` (
+            postcode varchar(8) COLLATE utf8_bin NOT NULL,
+            year unsigned int NOT NULL,
+            property_type varchar(1) COLLATE utf8_bin NOT NULL,
+            count unsigned int NOT NULL,
+            oa21 VARCHAR(10) NOT NULL,
+            lsoa21 VARCHAR(10) NOT NULL,
+            msoa21 VARCHAR(10) NOT NULL,
+            lad23 VARCHAR(10) NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE new_build_oa_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE new_build_oa_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
