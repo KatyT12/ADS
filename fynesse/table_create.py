@@ -327,3 +327,28 @@ def create_electoral_data(conn):
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
+
+def create_cons_to_oa(conn):
+  drop = "DROP TABLE IF EXISTS cons_to_oa_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `cons_to_oa_data` (
+            oa21 VARCHAR(10) NOT NULL,
+            pcon25 VARCHAR(10) NOT NULL,
+            lad21 VARCHAR(10) NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE cons_to_oa_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE cons_to_oa_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+def create_cons_to_oa_index(conn):
+  index_cons = """CREATE INDEX idx_cons_to_oa_data_pcon25 USING HASH ON cons_to_oa_data (pcon25)"""
+  index_output_area = """CREATE INDEX idx_postcode_area_oa USING HASH ON cons_to_oa_data (oa21)"""
+  conn.cursor().execute(index_cons)
+  conn.cursor().execute(index_output_area)
+  conn.commit()
