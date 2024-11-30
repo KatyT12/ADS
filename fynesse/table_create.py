@@ -301,3 +301,29 @@ def create_new_build_oa(conn):
   conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
+
+
+  def create_electoral_data(conn):
+  drop = "DROP TABLE IF EXISTS electoral_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `electoral_data` (
+            ons_id varchar(10) COLLATE utf8_bin NOT NULL,
+            year int unsigned NOT NULL,
+            first_party varchar(5) COLLATE utf8_bin NOT NULL,
+            electorate int unsigned NOT NULL,
+            valid_votes int unsigned NOT NULL,
+            con decimal(8,6) NULL,
+            lab decimal(8,6) NULL,
+            ld decimal(8,6) NULL,
+            ruk decimal(8,6) NULL,
+            green decimal(8,6) NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE electoral_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE electoral_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
