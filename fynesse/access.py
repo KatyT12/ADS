@@ -17,6 +17,7 @@ import numpy as np
 import osmnx as ox
 import osmium
 import zipfile
+import io
 
 import yaml
 import re
