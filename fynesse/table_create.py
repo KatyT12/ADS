@@ -303,7 +303,7 @@ def create_new_build_oa(conn):
   conn.commit()
 
 
-  def create_electoral_data(conn):
+def create_electoral_data(conn):
   drop = "DROP TABLE IF EXISTS electoral_data"
   create_query = """
           CREATE TABLE IF NOT EXISTS `electoral_data` (
