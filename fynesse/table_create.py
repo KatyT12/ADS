@@ -284,9 +284,9 @@ def create_new_build_oa(conn):
   create_query = """
           CREATE TABLE IF NOT EXISTS `new_build_oa_data` (
             postcode varchar(8) COLLATE utf8_bin NOT NULL,
-            year unsigned int NOT NULL,
+            year int unsigned NOT NULL,
             property_type varchar(1) COLLATE utf8_bin NOT NULL,
-            count unsigned int NOT NULL,
+            count int unsigned NOT NULL,
             oa21 VARCHAR(10) NOT NULL,
             lsoa21 VARCHAR(10) NOT NULL,
             msoa21 VARCHAR(10) NOT NULL,
