@@ -290,10 +290,10 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
 
   
 # Retrieve geopandas data for plotting
-def retrieve_map_data(dir='LAD_boundaries', file='LAD_DEC_2021_UK_BGC.shp'):
+def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/3f29d2c4a5834360a540ff206718c4f2/shapefile?layers=0', dir='LAD_boundaries', file='LAD_DEC_2023_UK_BFE.shp'):
   shapefile_path = dir + '/' + file
   if not os.path.exists(shapefile_path):
-    download_and_unzip("https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/7ceb69f99a024752b97ddac6b0323ab0/shapefile?layers=0", '', '', location=dir, all=True)
+    download_and_unzip(link, '', '', location=dir, all=True)
   gdf = gpd.read_file(shapefile_path)
   return gdf
 
