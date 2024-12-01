@@ -1,3 +1,11 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import geopandas as gpd
+import matplotlib.colors as mcolors
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+
 # Assign nodes to the nearest centres
 def assign_centres(df, centres, drop_cols=[]):
   num = len(df.index)
