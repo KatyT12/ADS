@@ -24,6 +24,7 @@ import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
 from .access import *
+from .util import *
 from .clustering import *
 ########################
 # Plotting
@@ -299,21 +300,6 @@ def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/
     download_and_unzip(link, '', '', location=dir, all=True)
   gdf = gpd.read_file(shapefile_path)
   return gdf
-
-# Retrieve the rows that are in London
-def in_london(df, name_col='lad_name'):
-  london_names = ["Barking and Dagenham", "Barnet", "Bexley", "Brent", 
-                "Bromley", "Camden", "Croydon", "Ealing", "Enfield", 
-                "Greenwich", "Hackney", "Hammersmith and Fulham", 
-                "Haringey", "Harrow", "Havering", "Hillingdon", 
-                "Hounslow", "Islington", "Kensington and Chelsea", 
-                "Kingston upon Thames", "Lambeth", "Lewisham", 
-                "Merton", "Newham", "Redbridge", "Richmond upon Thames", 
-                "Southwark", "Sutton", "Tower Hamlets", 
-                "Waltham Forest", "Wandsworth", "Westminster"]
-
-  london_lads = df[df[name_col].isin(london_names)]
-  return london_lads
 
 
 # Plot new builds per area, plot london seperately for visibility
