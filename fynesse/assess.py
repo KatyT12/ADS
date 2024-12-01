@@ -24,6 +24,7 @@ import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
 from .access import *
+from .clustering import *
 ########################
 # Plotting
 def plot_correlation(joined, labels):
