@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from sklearn.manifold import MDS
 from .util import *
 
 # Assign nodes to the nearest centres
@@ -85,21 +86,24 @@ colors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan']
 
 #--------
 
+def get_kmeans_colours(df, number, colors, key='LAD23CD', drop_cols= ['LAD23CD', 'LAD23NM'], england_only=True):
+    merged = gdf.merge(df, left_on=key, right_on=key)
+    if england_only:
+        merged = merged[merged['LAD23CD'].str.contains('E')]
+    clusters = lloyds_altered(merged[['avg_rag_estate', 'avg_rag_flats', 'avg_rag_shopping']], number, drop_cols = [])
+
+    merged['colours'] = 'black'
+    
+    for k,v in clusters.items():
+        c = colors[k]
+        merged.loc[v, 'colours'] = c
+    
+    return merged
+
+
 # Plot clustering of a geo dataframe, using lloyds_altered
 def plot_kmeans_clustering_locations(gdf, df, number, colors, key='LAD23CD', drop_cols= ['LAD23CD', 'LAD23NM'], ax=None, england_only=True):
-  merged = gdf.merge(df, left_on=key, right_on=key)
-  if england_only:
-    merged = merged[merged['LAD23CD'].str.contains('E')]
-  clusters = lloyds_altered(merged[['avg_rag_estate', 'avg_rag_flats', 'avg_rag_shopping']], number, drop_cols = [])
-  
-  if ax is None:
-    fig, ax = plt.subplots(figsize=(10,10))
-  
-  merged['colours'] = 'black'
-  
-  for k,v in clusters.items():
-    c = colors[k]
-    merged.loc[v, 'colours'] = c
+  merged = get_kmeans_colours(gdf, df, number, colors, key, drop_cols, england_only)
   
   lon = inset_axes(ax, width="30%", height="30%", loc="upper left") 
   lon.set_xticks([])
@@ -109,3 +113,4 @@ def plot_kmeans_clustering_locations(gdf, df, number, colors, key='LAD23CD', dro
   london_lads.plot(edgecolor="black", color=london_lads['colours'], ax = lon)
 
   merged.plot(color = merged['colours'], alpha=0.7, edgecolor='black', ax=ax)
+
