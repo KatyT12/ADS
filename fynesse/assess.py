@@ -311,7 +311,7 @@ def in_london(df, name_col='lad_name'):
                 "Southwark", "Sutton", "Tower Hamlets", 
                 "Waltham Forest", "Wandsworth", "Westminster"]
 
-  london_lads = gdf[gdf[name_col].isin(london_names)]
+  london_lads = df[df[name_col].isin(london_names)]
   return london_lads
 
 
