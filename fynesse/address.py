@@ -50,3 +50,34 @@ def find_nearest_output_areas(connection, latitude, longitude, number=1):
           limit {number};'''
   
   return query_to_dataframe(connection, query)
+
+# Fit a binomial model
+# design_func is the function which retrieves the design matrix
+def fit_binomial_model(connection, number, design_func):
+  print('Collecting training data')
+  df = fynesse.assess.query_random_set(connection, number)
+  training = fynesse.assess.extract_training_data(df)
+  X, actual = design_func(training)
+  print('Fitting model')
+  model = sm.GLM(actual, X, family = sm.families.Binomial())
+  results = model.fit()
+  return (results, X, training)
+
+
+
+# Extract data from the database into a useful table that can be used for training and finding correlations
+def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_ratio', 'two_vehicle_ratio'], pred_var='L15'):
+  df = df.loc[:,~df.columns.duplicated()].copy()
+  codes = df['geography_code'].drop_duplicates()
+  osm_tags = df['tag'].drop_duplicates()
+  result = df.pivot(index='geography_code', columns='tag', values='count').reset_index()
+  for t in osm_tags:
+    result.loc[result[t].isnull(), t] = 0
+
+  if pred_var == 'L15':
+    result = result.merge(df[['geography_code', *census_tags, 'L15', 'total_over_16']].drop_duplicates(), left_on='geography_code', right_on='geography_code')
+    result['training'] = result['L15']/result['total_over_16']
+  else:
+    result = result.merge(df[['geography_code', *census_tags, pred_var]].drop_duplicates(), left_on='geography_code', right_on='geography_code')
+    result['training'] = result[pred_var]
+  return result

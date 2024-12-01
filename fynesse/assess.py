@@ -19,6 +19,7 @@ import numpy as np
 from matplotlib.lines import Line2D
 import re
 import matplotlib.pyplot as plt
+import geopandas as gpd
 import osmnx as ox
 from .access import *
 ########################
@@ -276,24 +277,26 @@ def query_training_for_location(conn, latitude, longitude, distance, table='hous
   return query_to_dataframe(conn, query)
 
 
-
-
-# Extract data from the database into a useful table that can be used for training and finding correlations
-def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_ratio', 'two_vehicle_ratio'], pred_var='L15'):
-  df = df.loc[:,~df.columns.duplicated()].copy()
-  codes = df['geography_code'].drop_duplicates()
-  osm_tags = df['tag'].drop_duplicates()
-  result = df.pivot(index='geography_code', columns='tag', values='count').reset_index()
-  for t in osm_tags:
-    result.loc[result[t].isnull(), t] = 0
-
-  if pred_var == 'L15':
-    result = result.merge(df[['geography_code', *census_tags, 'L15', 'total_over_16']].drop_duplicates(), left_on='geography_code', right_on='geography_code')
-    result['training'] = result['L15']/result['total_over_16']
+def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False):
+  # Online join
+  ptype_string = ', '.join(["'" + s + "'" for s in property_types])
+  if not by_lad:
+    query = f'select * from new_build_data as nb join postcode_oa_lad as pd on pd.postcode = nb.postcode where count > {threshold} and property_type in ({ptype_string}) and year between {year_from} and {year_to};'
   else:
-    result = result.merge(df[['geography_code', *census_tags, pred_var]].drop_duplicates(), left_on='geography_code', right_on='geography_code')
-    result['training'] = result[pred_var]
-  return result
+    query = f'select * from new_build_data as nb join postcode_data as pd on pd.postcode = nb.postcode where count > {threshold} and property_type in ({ptype_string}) and year between {year_from} and {year_to};'
+
+  df = query_to_dataframe(conn, query)
+  
+
+  
+# Retrieve geopandas data for plotting
+def retrieve_map_data(dir='LAD_boundaries', file='LAD_DEC_2021_UK_BGC.shp'):
+  download_and_unzip("https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/7ceb69f99a024752b97ddac6b0323ab0/shapefile?layers=0", '', '', location=dir, all=True)
+  shapefile_path = dir + '/' + file
+  gdf = gpd.read_file(shapefile_path)
+  return gdf
+
+
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
