@@ -348,15 +348,8 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
 
     # Plot London
     lon = inset_axes(ax, width="20%", height="20%", loc="lower right") 
-    london_names = ["Barking and Dagenham", "Barnet", "Bexley", "Brent", 
-                "Bromley", "Camden", "Croydon", "Ealing", "Enfield", 
-                "Greenwich", "Hackney", "Hammersmith and Fulham", 
-                "Haringey", "Harrow", "Havering", "Hillingdon", 
-                "Hounslow", "Islington", "Kensington and Chelsea", 
-                "Kingston upon Thames", "Lambeth", "Lewisham", 
-                "Merton", "Newham", "Redbridge", "Richmond upon Thames", 
-                "Southwark", "Sutton", "Tower Hamlets", 
-                "Waltham Forest", "Wandsworth", "Westminster"]
+    lon.set_xticks([])
+    lon.set_yticks([])
 
     london_lads = in_london(gdf)
     london_lads.plot(edgecolor="black", color=london_lads['col'], ax = lon)
