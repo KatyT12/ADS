@@ -21,6 +21,7 @@ import re
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import matplotlib.colors as mcolors
+import matplotlib.patches as mpatches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
 from .access import *
@@ -332,6 +333,13 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
     gdf.plot(edgecolor="black", color=gdf['col'], ax = ax)
     ax.set_xticks([])
     ax.set_yticks([])
+
+    leg = [
+      mpatches.Patch(color='blue', label='High number of builds'),
+      mpatches.Patch(color='red', label='Low number of builds'),
+    ]
+
+    ax.legend(handles=leg)
 
     # Plot London
     lon = inset_axes(ax, width="20%", height="20%", loc="lower right") 
