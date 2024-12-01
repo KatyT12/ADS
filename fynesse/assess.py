@@ -20,6 +20,8 @@ from matplotlib.lines import Line2D
 import re
 import matplotlib.pyplot as plt
 import geopandas as gpd
+import matplotlib.colors as mcolors
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
 from .access import *
 ########################
@@ -297,7 +299,71 @@ def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/
   gdf = gpd.read_file(shapefile_path)
   return gdf
 
+# Retrieve the rows that are in London
+def in_london(df, name_col='lad_name'):
+  london_names = ["Barking and Dagenham", "Barnet", "Bexley", "Brent", 
+                "Bromley", "Camden", "Croydon", "Ealing", "Enfield", 
+                "Greenwich", "Hackney", "Hammersmith and Fulham", 
+                "Haringey", "Harrow", "Havering", "Hillingdon", 
+                "Hounslow", "Islington", "Kensington and Chelsea", 
+                "Kingston upon Thames", "Lambeth", "Lewisham", 
+                "Merton", "Newham", "Redbridge", "Richmond upon Thames", 
+                "Southwark", "Sutton", "Tower Hamlets", 
+                "Waltham Forest", "Wandsworth", "Westminster"]
 
+  london_lads = gdf[gdf[name_col].isin(london_names)]
+  return london_lads
+
+
+# Plot new builds per area, plot london seperately for visibility
+def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
+  # Online join
+  ptype_string = ', '.join(["'" + s + "'" for s in property_types])
+  if by_lad:
+    query = f'select lad23, lad21, lad_name, count(*) as number from new_build_data as nb join postcode_area_data as pd on pd.postcode = nb.postcode where count > {threshold} and property_type in ({ptype_string}) and year between {year_from} and {year_to} group by pd.lad23;'
+  else:
+    query = f'select * from new_build_data as nb join postcode_data as pd on pd.postcode = nb.postcode where count > {threshold} and property_type in ({ptype_string}) and year between {year_from} and {year_to};'
+
+
+  if ax is None:
+    fig, ax = plt.subplots()
+  
+  df = query_to_dataframe(conn, query)
+  if by_lad:    
+    gdf = retrieve_map_data()
+    gdf = gdf.merge(df, left_on = 'LAD23CD', right_on='lad23')
+    cmap = plt.cm.coolwarm
+
+    if not iqr:
+      norm = mcolors.Normalize(vmin=gdf['number'].min(), vmax=gdf['number'].max())
+      gdf['normed'] = gdf['number'].apply(lambda x: norm(x))
+    else:
+      low, high = np.percentile(gdf['number'], [2, 98])
+      gdf['normed'] = np.clip((gdf['number'] - low) / (high - low), 0, 1)
+    
+    gdf['col'] = gdf['normed'].apply(lambda x: mcolors.to_hex(cmap(x)))
+    gdf.plot(edgecolor="black", color=gdf['col'], ax = ax)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    # Plot London
+    lon = inset_axes(ax, width="20%", height="20%", loc="lower right") 
+    london_names = ["Barking and Dagenham", "Barnet", "Bexley", "Brent", 
+                "Bromley", "Camden", "Croydon", "Ealing", "Enfield", 
+                "Greenwich", "Hackney", "Hammersmith and Fulham", 
+                "Haringey", "Harrow", "Havering", "Hillingdon", 
+                "Hounslow", "Islington", "Kensington and Chelsea", 
+                "Kingston upon Thames", "Lambeth", "Lewisham", 
+                "Merton", "Newham", "Redbridge", "Richmond upon Thames", 
+                "Southwark", "Sutton", "Tower Hamlets", 
+                "Waltham Forest", "Wandsworth", "Westminster"]
+
+    london_lads = in_london(gdf)
+    london_lads.plot(edgecolor="black", color=london_lads['col'], ax = lon)
+  else:
+    ax.scatter(df['longitude'], df['latitude'], color = 'red', s = 0.01, alpha=0.7)
+    ax.set_title('Location of new builds')
+    return df
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
