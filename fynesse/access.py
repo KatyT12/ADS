@@ -40,15 +40,19 @@ def download_arbitrary_csv(url, file_name):
 
 
 # Download and extract a file
-def download_and_unzip(url, file_name, zip_name, location='.', ):
+def download_and_unzip(url, file_name, zip_name, location='.', all=False):
   dir = location
   os.makedirs(dir, exist_ok = True)
 
   response = requests.get(url)
   if response.status_code == 200:
       with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        z.extract(zip_name, dir)
-        os.rename(dir + '/' + zip_name, dir + '/' + file_name)
+        if all:
+          z.extractall(path=location)
+        else:
+          z.extract(zip_name, dir)
+          os.rename(dir + '/' + zip_name, dir + '/' + file_name)
+          
 
   if os.path.exists(dir) and os.listdir(dir):
     print(f"Files already exist at: {dir}.")
