@@ -90,7 +90,7 @@ def plot_kmeans_clustering_locations(gdf, df, number, colors, key='LAD23CD', dro
   merged = gdf.merge(df, left_on=key, right_on=key)
   if england_only:
     merged = merged[merged['LAD23CD'].str.contains('E')]
-  clusters = lloyds_altered(merged[['avg_rag_estate', 'avg_rag_flats', 'avg_rag_shopping']], 6, drop_cols = [])
+  clusters = lloyds_altered(merged[['avg_rag_estate', 'avg_rag_flats', 'avg_rag_shopping']], number, drop_cols = [])
   
   if ax is None:
     fig, ax = plt.subplots(figsize=(10,10))
