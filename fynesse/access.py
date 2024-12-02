@@ -527,6 +527,7 @@ def insert_into_count_table(conn, distance, tags_filter):
   upload = f'select geography_code, tag, count(*) as count, {distance} as distance from nssec_data as a join tagged_temporary as b on (b.latitude between a.latitude - {lat_dist} and a.latitude + {lat_dist} and b.longitude between a.longitude - {lon_dist} and a.longitude + {lon_dist})  group by geography_code, tag;'
   print(upload)
 
+  cur = conn.cursor()
   cur.execute(upload)
   rows = cur.fetchall()
   csv_file_path = 'output_file.csv'
