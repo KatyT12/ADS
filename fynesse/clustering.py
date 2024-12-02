@@ -86,7 +86,7 @@ colors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan']
 
 #--------
 
-def get_kmeans_colours(df, number, colors, key='LAD23CD', drop_cols= ['LAD23CD', 'LAD23NM'], england_only=True):
+def get_kmeans_colours(gdf, df, number, colors, key='LAD23CD', drop_cols= ['LAD23CD', 'LAD23NM'], england_only=True):
     merged = gdf.merge(df, left_on=key, right_on=key)
     if england_only:
         merged = merged[merged['LAD23CD'].str.contains('E')]
