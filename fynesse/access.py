@@ -538,7 +538,7 @@ def insert_into_count_table(conn, distance, tags_filter):
     csv_writer.writerows(rows)
   
   cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path + "' INTO TABLE `code_count_table` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
-  con.commit()
+  conn.commit()
 
 
 
