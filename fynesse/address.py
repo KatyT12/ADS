@@ -51,6 +51,15 @@ def find_nearest_output_areas(connection, latitude, longitude, number=1):
   
   return query_to_dataframe(connection, query)
 
+def query_for_location(connection, latitude, longitude, number, table):
+  oa = find_nearest_output_areas(connection, latitude, longitude, number=number)
+  codes = ', '.join([ '\'' + s + '\'' for s in oa['geography_code']])
+  query = f'''
+    select * from {table}
+    where geography_code in ({codes});
+  '''
+  return query_to_dataframe(connection, query)
+
 # Fit a binomial model
 # design_func is the function which retrieves the design matrix
 def fit_binomial_model(connection, number, design_func):
