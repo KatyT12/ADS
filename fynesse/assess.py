@@ -236,7 +236,7 @@ def query_to_dataframe(conn, query):
   df = df.loc[:,~df.columns.duplicated()].copy()
   return df
 
-def query_random_set(conn, number, table='household_vehicle_data', pred_table='nssec_data'):
+def query_random_set(conn, number, table='household_vehicle_data', pred_table='nssec_data', dist_query=1):
   query = f'''
     with codes AS (
         select geography_code
@@ -249,7 +249,7 @@ def query_random_set(conn, number, table='household_vehicle_data', pred_table='n
     from code_count_table as cc
     join {table} as hv on hv.geography_code = cc.geography_code 
     join {pred_table} as ns on ns.geography_code = cc.geography_code 
-    WHERE cc.geography_code IN (SELECT * FROM codes);
+    WHERE cc.geography_code IN (SELECT * FROM codes) and cc.distance = {dist_query};
   '''
   return query_to_dataframe(conn, query)
 
@@ -262,7 +262,7 @@ def random_query_table(conn, number, table):
   '''
   return query_to_dataframe(conn, query)
 
-def query_training_for_location(conn, latitude, longitude, distance, table='household_vehicle_data', pred_table='nssec_data'):
+def query_training_for_location(conn, latitude, longitude, distance, table='household_vehicle_data', pred_table='nssec_data', dist_query=1):
   
   #lat_dist, lon_dist = fynesse.access.latlong_to_km(52.5152422, -1.1482686, distance, distance)
   n, s, e, w = access.get_bounding_box(latitude, longitude, distance)
@@ -278,7 +278,7 @@ def query_training_for_location(conn, latitude, longitude, distance, table='hous
     from code_count_table as cc
     join {table} as hv on hv.geography_code = cc.geography_code 
     join {pred_table} as ns on ns.geography_code = cc.geography_code 
-    WHERE cc.geography_code IN (SELECT * FROM codes);
+    WHERE cc.geography_code IN (SELECT * FROM codes) and cc.distance = {dist_query};
   '''
   return query_to_dataframe(conn, query)
 
@@ -310,9 +310,9 @@ def plot_pca(data, points, colour_col=None, ax=None):
   pca = PCA(n_components=2)
   transformed = pca.fit_transform(points)
   if colour_col is not None:
-    ax.scatter(transformed[:,0], transformed[:,1], c=data[colour_col])
+    ax.scatter(transformed[:,0], transformed[:,1], c=data[colour_col], alpha=0.7)
   else:
-    ax.scatter(transformed[:,0], transformed[:,1])
+    ax.scatter(transformed[:,0], transformed[:,1], alpha=0.7)
 
 # Plot new builds per area, plot london seperately for visibility
 def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
