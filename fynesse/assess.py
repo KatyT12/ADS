@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
+from sklearn.decomposition import PCA
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
 from .access import *
@@ -302,6 +303,16 @@ def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/
   gdf = gpd.read_file(shapefile_path)
   return gdf
 
+def plot_pca(data, points, colour_col=None, ax=None):
+  if ax is None:
+    fig, ax = plt.subplots(figsize=(10,10))
+  
+  pca = PCA(n_components=2)
+  transformed = pca.fit_transform(points)
+  if colour_col is not None:
+    ax.scatter(transformed[:,0], transformed[:,1], c=data[colour_col])
+  else:
+    ax.scatter(transformed[:,0], transformed[:,1])
 
 # Plot new builds per area, plot london seperately for visibility
 def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
