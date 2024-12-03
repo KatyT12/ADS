@@ -415,6 +415,22 @@ def retrieve_electral_lad_aggregated(connection):
   result = electoral_lad_df.groupby("lad23")[['electorate','valid_votes','con','lab','ld','ruk','green']].sum().reset_index()
   return result
 
+#----------
+
+# A generic method for plotting colours on a map of England/the UK
+def plot_colours(gdf, df, key='LAD23CD', england_only=True, ax = None):
+  merged = gdf.merge(df, left_on='LAD23CD', right_on='lad23')
+  if england_only:
+    merged = merged[merged['LAD23CD'].str.contains('E')]
+  
+  if ax is None:
+    fig, ax = plt.subplots()
+  merged.plot(color = merged['colours'], alpha=0.7, ax=ax)
+
+electoral_lad["most_voted"] = electoral_lad[['con', 'lab', 'ld', 'ruk', 'green']].idxmax(axis=1)
+merge_electoral = nimby_df.merge(electoral_lad, left_on='LAD23CD', right_on='lad23')
+
+
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
     df = access.data()
