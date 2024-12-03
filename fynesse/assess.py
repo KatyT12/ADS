@@ -401,9 +401,9 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
 # Query electoral data to lad
 def get_electoral_to_lad_weighted(conn):
   query = f'''
-  with tab as (select  pcon25, lad21, count(*) as count from cons_to_oa_data group by pcon25, lad21),
+  with tab as (select  pcon25, lad21, count(*) as count from cons_to_oa_data group by pcon25, lad23),
   counts as (select pcon25, count(*) as count from cons_to_oa_data group by pcon25)
-  select tab.pcon25, tab.lad21, tab.count/counts.count as weight, ed.* from tab join counts on tab.pcon25 = counts.pcon25 join electoral_data as ed on ed.ons_id = tab.pcon25
+  select tab.pcon25, tab.lad23, tab.count/counts.count as weight, ed.* from tab join counts on tab.pcon25 = counts.pcon25 join electoral_data as ed on ed.ons_id = tab.pcon25
   '''
   return query_to_dataframe(conn, query)
 
@@ -412,7 +412,7 @@ def retrieve_electral_lad_aggregated(connection):
   # Multiply by weight
   electoral_lad_df.loc[:,['electorate','valid_votes','con','lab','ld','ruk','green']] = electoral_lad_df[['electorate','valid_votes','con','lab','ld','ruk','green']].multiply(electoral_lad_df['weight'], axis=0).astype(float)
   # Sum and group by LAD
-  result = electoral_lad_df.groupby("lad21")[['electorate','valid_votes','con','lab','ld','ruk','green']].sum().reset_index()
+  result = electoral_lad_df.groupby("lad23")[['electorate','valid_votes','con','lab','ld','ruk','green']].sum().reset_index()
   return result
 
 def data():
