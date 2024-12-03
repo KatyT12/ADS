@@ -312,11 +312,16 @@ def create_electoral_data(conn):
             first_party varchar(5) COLLATE utf8_bin NOT NULL,
             electorate int unsigned NOT NULL,
             valid_votes int unsigned NOT NULL,
-            con decimal(8,6) NULL,
-            lab decimal(8,6) NULL,
-            ld decimal(8,6) NULL,
-            ruk decimal(8,6) NULL,
-            green decimal(8,6) NULL,
+            con int unsigned NULL,
+            lab int unsigned NULL,
+            ld int unsigned NULL,
+            ruk int unsigned NULL,
+            green int unsigned NULL,
+            con_ratio decimal(8,6) NULL,
+            lab_ratio decimal(8,6) NULL,
+            ld_ratio decimal(8,6) NULL,
+            ruk_ratio decimal(8,6) NULL,
+            green_ratio decimal(8,6) NULL,
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
