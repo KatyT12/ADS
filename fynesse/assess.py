@@ -401,7 +401,7 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
 # Query electoral data to lad
 def get_electoral_to_lad_weighted(conn):
   query = f'''
-  with tab as (select  pcon25, lad21, count(*) as count from cons_to_oa_data group by pcon25, lad23),
+  with tab as (select  pcon25, lad23, count(*) as count from cons_to_oa_data group by pcon25, lad23),
   counts as (select pcon25, count(*) as count from cons_to_oa_data group by pcon25)
   select tab.pcon25, tab.lad23, tab.count/counts.count as weight, ed.* from tab join counts on tab.pcon25 = counts.pcon25 join electoral_data as ed on ed.ons_id = tab.pcon25
   '''
