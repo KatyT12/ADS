@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
+import seaborn as sns
 from sklearn.decomposition import PCA
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import osmnx as ox
@@ -325,6 +326,8 @@ def get_components(points, num):
   transformed = pca.fit_transform(points)
   pca.fit(points)
   return pca.components_
+
+
 
 def plot_components(points, num, cols, x_axis, ax = None):
   if ax is None:
