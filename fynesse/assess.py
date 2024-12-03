@@ -405,7 +405,7 @@ def get_electoral_to_lad_weighted(conn):
   counts as (select pcon25, count(*) as count from cons_to_oa_data group by pcon25)
   select tab.pcon25, tab.lad21, tab.count/counts.count as weight, ed.* from tab join counts on tab.pcon25 = counts.pcon25 join electoral_data as ed on ed.ons_id = tab.pcon25
   '''
-  return fynesse.assess.query_to_dataframe(conn, query)
+  return query_to_dataframe(conn, query)
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
