@@ -599,7 +599,7 @@ def load_census_data(c_type, code='oa', year='2021'):
 # Download and load census data, cache
 def download_load(code, area='ltla', year='2021'):
   if not os.path.exists(f'census-{code}/{year}-{area}.csv'):
-    fynesse.access.download_census_data(code, area, years=[year])
+    download_census_data(code, area, years=[year])
   return load_census_data(c_type=code, code=area, year=year).drop(['date', 'geography'], axis=1)
 
 # Clean out and aggregate the census composition daa appropriately
