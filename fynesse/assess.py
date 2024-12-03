@@ -327,7 +327,12 @@ def get_components(points, num):
   pca.fit(points)
   return pca.components_
 
-
+def get_features(points, num, base):
+  pca = PCA(n_components=num)
+  transformed = pca.fit_transform(points)
+  features = pd.DataFrame(transformed)
+  features['geography_code'] = base['geography_code']
+  return features
 
 def plot_components(points, num, cols, x_axis, ax = None):
   if ax is None:
@@ -391,6 +396,16 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
     ax.scatter(df['longitude'], df['latitude'], color = 'red', s = 0.01, alpha=0.7)
     ax.set_title('Location of new builds')
     return df
+
+
+# Query electoral data to lad
+def get_electoral_to_lad_weighted(conn):
+  query = f'''
+  with tab as (select  pcon25, lad21, count(*) as count from cons_to_oa_data group by pcon25, lad21),
+  counts as (select pcon25, count(*) as count from cons_to_oa_data group by pcon25)
+  select tab.pcon25, tab.lad21, tab.count/counts.count as weight, ed.* from tab join counts on tab.pcon25 = counts.pcon25 join electoral_data as ed on ed.ons_id = tab.pcon25
+  '''
+  return fynesse.assess.query_to_dataframe(conn, query)
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
