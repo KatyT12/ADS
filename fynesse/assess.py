@@ -427,9 +427,6 @@ def plot_colours(gdf, df, key='LAD23CD', england_only=True, ax = None):
     fig, ax = plt.subplots()
   merged.plot(color = merged['colours'], alpha=0.7, ax=ax)
 
-electoral_lad["most_voted"] = electoral_lad[['con', 'lab', 'ld', 'ruk', 'green']].idxmax(axis=1)
-merge_electoral = nimby_df.merge(electoral_lad, left_on='LAD23CD', right_on='lad23')
-
 
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
