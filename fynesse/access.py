@@ -18,6 +18,7 @@ import osmnx as ox
 import osmium
 import zipfile
 import io
+from functools import reduce
 
 import yaml
 import re
@@ -591,6 +592,35 @@ def download_census_data(c_type, code, years, base='.'):
     print(f"Files already exist at: {dir}.")
     return
 
+def load_census_data(c_type, code='oa', year='2021'):
+  return pd.read_csv(f'census-{c_type.lower()}/{year}-{code}.csv')
+
+
+# Clean out and aggregate the census composition daa appropriately
+def clean_composition_data(df):
+  ret = df
+  ret['comp:total'] = df.iloc[:,1]
+  ret['comp:single_family:total'] = df.iloc[:, 5]
+  ret['comp:one_person:total'] = df.iloc[:, 2]
+  ret['comp:single_family:dependent_children'] = df.iloc[:, 9] + df.iloc[:, 13] + df.iloc[:, 16]
+  ret['comp:single_family:no_children'] = df.iloc[:, 8] + df.iloc[:, 12]
+  ret['comp:single_family:non_dependant_children'] = df.iloc[:, 10] + df.iloc[:, 14] + df.iloc[:, 17]
+  ret['comp:other:total'] = df.iloc[:, 18]
+
+  return ret[['geography code','comp:total', 'comp:one_person:total', 'comp:single_family:total', 'comp:single_family:dependent_children', 'comp:single_family:no_children', 'comp:single_family:non_dependant_children', 'comp:other:total']]
+
+# Retrieve the census data, and clean appropriately
+def get_census_data(area, year):
+  age_df = download_load('ts007a', area, year)
+  composition_df = clean_composition_data(download_load('ts003', area, year))
+  accomodation_type_df = download_load('ts044', area, year)
+  deprivation_df = download_load('ts011', area, year)
+  tenure_df = download_load('ts054', area, year)
+  tenure_df = tenure_df.drop(tenure_df.columns[[3,4,5,6,8,9,11, 12]],axis=1)
+  
+  merged_df = reduce(lambda  left, right: pd.merge(left,right,on=['geography code'],how='outer'), [age_df, composition_df, accomodation_type_df, deprivation_df, tenure_df])
+  merged_df.insert(0, 'date', year + '-01-01')
+  return merged_df
 
 def data():
     """Read the data from the web or local file, returning structured format such as a data frame"""

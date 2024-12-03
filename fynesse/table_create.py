@@ -352,3 +352,64 @@ def create_cons_to_oa_index(conn):
   conn.cursor().execute(index_cons)
   conn.cursor().execute(index_output_area)
   conn.commit()
+
+def postcode_join(conn, year):
+  start_date = str(year) + "-01-01"
+  end_date = str(year) + "-12-31"
+
+  cur = conn.cursor()
+  print('Selecting data for year: ' + str(year))
+  cur.execute(f'select nbd.postcode, nbd.year, nbd.property_type, nbd.count, poa.oa21, poa.lsoa21, poa.msoa21, poa.lad23 from (select * from new_build_data where year = {year}) AS nbd inner join postcode_area_data as poa on nbd.postcode = poa.postcode')
+  rows = cur.fetchall()
+
+  csv_file_path = 'output_file.csv'
+
+  with open(csv_file_path, 'w', newline='') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerows(rows)
+  print('Storing data for year: ' + str(year))
+  cur.execute(f"LOAD DATA LOCAL INFILE '" + csv_file_path + "' INTO TABLE `new_build_oa_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED by '\"' LINES STARTING BY '' TERMINATED BY '\n';")
+  conn.commit()
+  print('Data stored for year: ' + str(year))
+
+# Census combined data, this is complex because all the columns need to be properly ordered for the combined data
+def create_census_combined_data(conn):
+  cols = ['geography_code tinytext COLLATE utf8_bin not null', 'age:total int unsigned not null']
+  comp_cols = ['comp:total', 'comp:one_person:total', 'comp:single_family:total', 'comp:single_family:dependent_children', 'comp:single_family:no_children', 'comp:single_family:non_dependant_children', 'comp:other:total']
+
+  for i in range(0,85,5):
+    cols.append(f'age:{i}-{i+4} int unsigned not null')
+  cols.append('age:85 int unsigned not null')
+  for c in comp_cols:
+    cols.append(c + ' int unsigned not null')
+
+  accom_cols = ['total', 'detached', 'semi', 'terraced', 'flats', 'shared', 'converted', 'commercial', 'caravan']
+  for c in accom_cols:
+    cols.append(f'accom:{c} int unsigned not null')
+
+  deprivation_cols = ['total',0,1,2,3,4]
+  for c in deprivation_cols:
+    cols.append(f'deprivation:{c} int unsigned not null')
+
+  tenure_cols = ['total', 'owned', 'social_rented', 'private_rented', 'rent_free']
+  for c in tenure_cols:
+    cols.append(f'tenure:{c} int unsigned not null')
+
+  table_fields = ', '.join(cols).replace(':','_').replace('-','_')
+  drop = "DROP TABLE IF EXISTS census_combined_data"
+  query = f'''
+    CREATE TABLE IF NOT EXISTS `census_combined_data` (
+      census_date date NOT NULL,
+      {table_fields},
+      db_id bigint(20) unsigned NOT NULL
+      ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1
+   '''
+
+  add_primary = "ALTER TABLE census_combined_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE census_combined_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+  
+  conn.cursor().execute(drop)
+  conn.cursor().execute(query)
+  conn.cursor().execute(add_primary)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
