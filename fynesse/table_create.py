@@ -335,6 +335,7 @@ def create_cons_to_oa(conn):
             oa21 VARCHAR(10) NOT NULL,
             pcon25 VARCHAR(10) NOT NULL,
             lad21 VARCHAR(10) NOT NULL,
+            lad21nm VARCHAR(45) NOT NULL,
             db_id bigint(20) unsigned NOT NULL
           ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
 
