@@ -303,6 +303,8 @@ def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/
   gdf = gpd.read_file(shapefile_path)
   return gdf
 
+# ------------------ PCA
+
 def plot_pca(data, points, colour_col=None, ax=None):
   if ax is None:
     fig, ax = plt.subplots(figsize=(10,10))
@@ -314,6 +316,28 @@ def plot_pca(data, points, colour_col=None, ax=None):
   else:
     ax.scatter(transformed[:,0], transformed[:,1], alpha=0.7)
   return pca
+
+def get_cols(df, name):
+  return df.columns[df.columns.str.contains(name)]
+
+def get_components(points, num):
+  pca = PCA(n_components=num)
+  transformed = pca.fit_transform(points)
+  pca.fit(points)
+  return pca.components_
+
+def plot_components(points, num, cols, x_axis, ax = None):
+  if ax is None:
+    fig, ax = plt.subplots(figsize=(23,8),  ncols=2)
+  
+  components = get_components(points, num)
+  sns.heatmap(components, annot=True, cmap="coolwarm", xticklabels=cols, cbar=True, ax=ax[0])
+  for i,c in enumerate(components):
+    ax[1].plot(x_axis, c, label=f'PC {i}')
+  ax[1].legend()
+  ax[1].set_title('Principal components')
+
+
 
 # Plot new builds per area, plot london seperately for visibility
 def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
