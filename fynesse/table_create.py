@@ -372,6 +372,31 @@ def postcode_join(conn, year):
   conn.commit()
   print('Data stored for year: ' + str(year))
 
+
+def get_census_combined_cols():
+  cols = ['census_date', 'geography_code', 'age:total']
+  comp_cols = ['comp:total', 'comp:one_person:total', 'comp:single_family:total', 'comp:single_family:dependent_children', 'comp:single_family:no_children', 'comp:single_family:non_dependant_children', 'comp:other:total']
+  for i in range(0,85,5):
+    cols.append(f'age:{i}-{i+4}')
+  cols.append('age:85')
+  for c in comp_cols:
+    cols.append(c)
+
+  accom_cols = ['total', 'detached', 'semi', 'terraced', 'flats', 'shared', 'converted', 'commercial', 'caravan']
+  for c in accom_cols:
+    cols.append(f'accom:{c}')
+
+  deprivation_cols = ['total',0,1,2,3,4]
+  for c in deprivation_cols:
+    cols.append(f'deprivation:{c}')
+
+  tenure_cols = ['total', 'owned', 'social_rented', 'private_rented', 'rent_free']
+  for c in tenure_cols:
+    cols.append(f'tenure:{c}')
+  
+  return cols
+
+
 # Census combined data, this is complex because all the columns need to be properly ordered for the combined data
 def create_census_combined_data(conn):
   cols = ['geography_code tinytext COLLATE utf8_bin not null', 'age:total int unsigned not null']
