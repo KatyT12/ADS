@@ -313,6 +313,7 @@ def plot_pca(data, points, colour_col=None, ax=None):
     ax.scatter(transformed[:,0], transformed[:,1], c=data[colour_col], alpha=0.7)
   else:
     ax.scatter(transformed[:,0], transformed[:,1], alpha=0.7)
+  return pca
 
 # Plot new builds per area, plot london seperately for visibility
 def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
