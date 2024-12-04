@@ -104,7 +104,7 @@ def plot_prices_corr_barchart(house_prices, census_df, nimby_df):
 
   corr_df = pd.DataFrame(values)
   corr_df.columns = ['value', 'rag','property_type']
-  sns.barplot(data=v, x='rag', y='value', ax = ax, hue='property')
+  sns.barplot(data=corr_df, x='rag', y='value', ax = ax, hue='property')
 
 # Count points of interest near coordinates
 def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0) -> dict:
