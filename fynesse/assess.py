@@ -83,6 +83,29 @@ def plot_mean_price_area_ratio(joined, over_column):
   plt.show()
   return y_axis
 
+
+# Plot the correlation bar chart between nimby data and other
+def plot_prices_corr_barchart(house_prices, census_df, nimby_df):
+  df = avg_house_price_df.merge(census_df, left_on='lad23', right_on='geography_code').merge(nimby_df, left_on='lad23', right_on='LAD23CD')
+
+  df[df['property_type'].isin(['T', 'S', 'D'])]
+  df['value'] = np.log(df['avg(price)'].astype(float)) * df['tenure:owned']
+
+  types = df['property_type'].drop_duplicates()
+  fig, ax = plt.subplots()
+  values = []
+  cols = ['rag','avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']
+
+  for i, p in enumerate(types):
+    filtered = df[df['property_type'] == p]
+    corr_vals = -filtered[['value', *cols]].corr()[cols]
+    for col in cols:
+      values.append([corr_vals[col][0], col, p])
+
+  corr_df = pd.DataFrame(values)
+  corr_df.columns = ['value', 'rag','property_type']
+  sns.barplot(data=v, x='rag', y='value', ax = ax, hue='property
+
 # Count points of interest near coordinates
 def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0) -> dict:
     """
