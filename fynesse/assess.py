@@ -86,7 +86,7 @@ def plot_mean_price_area_ratio(joined, over_column):
 
 # Plot the correlation bar chart between nimby data and other
 def plot_prices_corr_barchart(house_prices, census_df, nimby_df):
-  df = avg_house_price_df.merge(census_df, left_on='lad23', right_on='geography_code').merge(nimby_df, left_on='lad23', right_on='LAD23CD')
+  df = house_prices.merge(census_df, left_on='lad23', right_on='geography_code').merge(nimby_df, left_on='lad23', right_on='LAD23CD')
 
   df[df['property_type'].isin(['T', 'S', 'D'])]
   df['value'] = np.log(df['avg(price)'].astype(float)) * df['tenure:owned']
