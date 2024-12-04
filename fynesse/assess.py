@@ -342,6 +342,34 @@ def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=[
   df = query_to_dataframe(conn, query)
   
 
+def get_new_builds_total(connection, types):
+  ptype_string = ', '.join(["'" + s + "'" for s in types])
+  query = f'''
+  select sum(nb.count) as count, year, lad23 from new_build_data as nb
+  join postcode_area_data as pd
+  on pd.postcode = nb.postcode
+  where property_type in ({ptype_string})
+  group by lad23, year
+  '''
+  return query_to_dataframe(connection, query)
+
+def plot_new_build_total_corr(df, nimby_df):
+  merged = nimby_df.merge(df, left_on='LAD23CD', right_on='lad23')
+  fig, ax = plt.subplots(ncols=3,nrows=8, figsize=(20,40))
+  i = 0
+  j = 0
+  for year in range (2024,2001,-1):
+    merged_y = merged[merged['year'] == year]
+    merged_y['log_count'] = np.log(merged_y['count'].astype(float)+1)
+
+    ax[i][j].scatter(merged_y['rag'], merged_y['log_count'])
+    ax[i][j].set_title(f'RAG against total new builds For {year}')
+    
+    
+    print(merged_y[['rag', 'log_count']].corr())
+    i += j == 2
+    j = (j+1) % 3
+
   
 # Retrieve geopandas data for plotting
 def retrieve_map_data(link = 'https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/3f29d2c4a5834360a540ff206718c4f2/shapefile?layers=0', dir='LAD_boundaries', file='LAD_DEC_2023_UK_BFE.shp'):
