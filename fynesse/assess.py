@@ -92,19 +92,25 @@ def plot_prices_corr_barchart(house_prices, census_df, nimby_df):
   df['value'] = np.log(df['avg(price)'].astype(float)) * df['tenure:owned']
 
   types = df['property_type'].drop_duplicates()
-  fig, ax = plt.subplots()
   values = []
   cols = ['rag','avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']
 
+  fig, ax = plt.subplots(figsize=(15,6))
   for i, p in enumerate(types):
     filtered = df[df['property_type'] == p]
     corr_vals = -filtered[['value', *cols]].corr()[cols]
     for col in cols:
       values.append([corr_vals[col][0], col, p])
 
+  # Plot correlation, group by property_type
   corr_df = pd.DataFrame(values)
   corr_df.columns = ['value', 'rag','property_type']
-  sns.barplot(data=corr_df, x='rag', y='value', ax = ax, hue='property_type')
+  axl = sns.barplot(data=corr_df, x='rag', y='value', hue='property_type',ax=ax)
+
+  # Add bar chart labels
+  for i in axl.containers:
+    axl.bar_label(i,fontsize=7)
+
 
 # Count points of interest near coordinates
 def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0) -> dict:
