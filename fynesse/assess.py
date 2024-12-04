@@ -428,6 +428,50 @@ def plot_colours(gdf, df, key='LAD23CD', england_only=True, ax = None):
   merged.plot(color = merged['colours'], alpha=0.7, ax=ax)
 
 
+
+# -------------- House prices
+def get_avg_price(connection):
+  query = '''
+    select avg(price), stddev(price), lad23, property_type from pp_data_oa_joined group by lad23, property_type;
+  '''
+  return query_to_dataframe(connection, query)
+
+def house_prices_against_rag(connection, nimby_df, remove_outliers=False):
+  df = get_avg_price(connection)
+  house_prices22 = df.merge(nimby_df, left_on='lad23', right_on='LAD23CD')
+  price_by_p_type = {p_type: rest for p_type, rest in house_prices22.groupby('property_type')}
+
+  fig, ax = plt.subplots(nrows=len(list(price_by_p_type.keys())), ncols=2, figsize=(14, 26))
+  for i, (prop_type, df) in enumerate(list(price_by_p_type.items())):
+    price_by_p_type
+
+    
+    # Use IQR to remove outliers
+    if remove_outliers:
+      low_q = df['avg(price)'].astype(float).quantile(0.25)
+      high_q = df['avg(price)'].astype(float).quantile(0.75)
+      quartile_range = high_q - low_q
+
+      lower = low_q - 1.5 * quartile_range
+      upper = high_q + 1.5 * quartile_range
+      df = df[(df['avg(price)'].astype(float) >= lower) & (df['avg(price)'].astype(float) <= upper)]
+    
+    j = df['avg(price)'].argsort()
+    price_by_p_type[prop_type] = df.iloc[j]
+
+    n = len(df.index)
+    ax[i][0].plot(np.arange(n), np.log(df.iloc[j]['avg(price)'].astype(float)), label=f'Average house price for {prop_type}')
+    ax[i][0].scatter(np.arange(n), df.iloc[j]['rag']*3, label='Support for new builds 1-10 ', s=3, color = 'orange')
+    ax[i][0].set_title(f'LAD ordered by {prop_type} price against avg(price) and support for new builds')
+    ax[i][1].scatter(np.log(df['avg(price)'].astype(float)), df['rag'], s=3)
+
+    ax[i][1].set_title(f'Log {prop_type} price against RAG')
+    ax[i][1].set_xlabel(f'Log {prop_type} price')
+    ax[i][1].set_ylabel(f'Support for new builds (RAG)')
+    ax[i][1]
+    ax[i][0].legend()
+
+
 def data():
     """Load the data from access and ensure missing values are correctly encoded as well as indices correct, column names informative, date and times correctly formatted. Return a structured data structure such as a data frame."""
     df = access.data()
