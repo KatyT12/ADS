@@ -111,6 +111,24 @@ def plot_prices_corr_barchart(house_prices, census_df, nimby_df):
   for i in axl.containers:
     axl.bar_label(i,fontsize=7)
 
+def normalize_column(df, col_name, total_col, drop_col=False):
+  cols = df.columns[df.columns.str.contains(col_name)]
+  ret = df.copy()
+  ret[cols] = df[cols].div(df[total_col], axis=0)
+  return ret
+
+
+def normalize_census_data(df):
+  # Normalise age
+  ret = normalize_column(df, 'age:', 'age:total')
+  ret = normalize_column(ret, 'comp:single_family', 'comp:single_family:total')
+  ret = normalize_column(ret, 'comp:', 'comp:total')
+  ret = normalize_column(ret, 'accom', 'accom:total')
+  ret = normalize_column(ret, 'deprivation', 'deprivation:total')
+  ret = normalize_column(ret, 'tenure', 'tenure:total')
+  return ret
+
+
 
 # Count points of interest near coordinates
 def count_pois_near_coordinates(latitude: float, longitude: float, tags: dict, distance_km: float = 1.0) -> dict:
