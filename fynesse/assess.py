@@ -420,7 +420,13 @@ def plot_components(points, num, cols, x_axis, ax = None):
   ax[1].legend()
   ax[1].set_title('Principal components')
 
-
+def corr_features_with_pred(base, df, num, feature_name, past=5, pred_names=['rag', 'avg_rag_estate', 'avg_rag_flats']):
+  cols = get_cols(df,feature_name)[1:]
+  points_ltla = df[cols]
+  features = get_features(points_ltla, num, df)
+  corr_merged = base.merge(features, left_on='LAD23CD', right_on='geography_code')
+  corr = corr_merged.corr(numeric_only=True)[pred_names][5:]
+  return corr.style.background_gradient(cmap='coolwarm')
 
 # Plot new builds per area, plot london seperately for visibility
 def map_new_build_areas(conn, year_from = 1995, year_to = 2024, property_types=['T', 'F', 'D', 'O', 'S'], threshold=5, groupings=None, by_lad= False, ax = None, iqr=False):
