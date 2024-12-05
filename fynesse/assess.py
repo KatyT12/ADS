@@ -128,6 +128,14 @@ def normalize_census_data(df):
   ret = normalize_column(ret, 'tenure', 'tenure:total')
   return ret
 
+# Agnostic to the area type
+def retrieve_census_data(connection, code):
+  if ltla:
+    ret = get_census_data(code, '2021')
+  else:
+    ret = get_census_data(code, '2021')
+
+  return normalize_census_data(merged_ltla)
 
 
 # Count points of interest near coordinates
