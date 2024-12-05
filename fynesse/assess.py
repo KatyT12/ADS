@@ -135,7 +135,8 @@ def retrieve_census_data(connection, code):
   else:
     ret = get_census_data(code, '2021')
 
-  return normalize_census_data(merged_ltla)
+  ret.columns = get_census_combined_cols() # Consistency with SQL columns
+  return normalize_census_data(ret)
 
 
 # Count points of interest near coordinates
