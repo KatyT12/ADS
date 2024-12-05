@@ -129,8 +129,8 @@ def normalize_census_data(df):
   return ret
 
 # Agnostic to the area type
-def retrieve_census_data(connection, code):
-  ret = get_census_data(code, '2021')
+def retrieve_census_data(code, year):
+  ret = get_census_data(code, year)
   ret.columns = get_census_combined_cols() # Consistency with SQL columns
   return normalize_census_data(ret)
 
