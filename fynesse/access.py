@@ -542,7 +542,11 @@ def insert_into_count_table(conn, distance, tags_filter):
   conn.commit()
 
 
-
+def get_nimby_data():
+  if not os.path.exists('nimby_data.csv'):
+    download_arbitrary_csv('https://datawrapper.dwcdn.net/fpMTl/8/dataset.csv', 'nimby_data.csv')
+  nimby_df = pd.read_csv('nimby_data.csv')
+  return nimby_df
 
 # Census download, clean data
 def remove_columns_from_df(csv_file, columns, path='.'):
