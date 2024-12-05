@@ -130,11 +130,7 @@ def normalize_census_data(df):
 
 # Agnostic to the area type
 def retrieve_census_data(connection, code):
-  if ltla:
-    ret = get_census_data(code, '2021')
-  else:
-    ret = get_census_data(code, '2021')
-
+  ret = get_census_data(code, '2021')
   ret.columns = get_census_combined_cols() # Consistency with SQL columns
   return normalize_census_data(ret)
 
