@@ -351,3 +351,17 @@ def get_k_folded_results(connection, k, training, response, design_func, regular
   dat = pd.DataFrame(ret)
   dat.columns = ['corr', 'rmse', 'r2']
   return dat
+
+def retrieve_best_alpha(connection, training, response, weight, test_range=(-8,-2), cross_val_groups=10, number=100, linear=False):
+  if linear:
+    values = [0,*np.linspace(test_range[0],test_range[1],number)]
+  else:
+    values = [0,*np.logspace(test_range[0],test_range[1],number)]
+  
+  outputs = []
+  for v in values:
+    ret = get_k_folded_results(connection, cross_val_groups, training, response, get_design_1, regularized = True, alpha = v, weight= weight)
+    outputs.append(ret.mean(axis=0).to_frame().T)
+  results = pd.concat(outputs)
+  results['alpha'] = values
+  return results.reset_index()
