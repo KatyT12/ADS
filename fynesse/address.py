@@ -203,7 +203,7 @@ def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, 
   
 
   if ridge is not None:
-    model.fit_regularized(alpha=ridge, L1_wt=0)
+    fitted_model = model.fit_regularized(alpha=ridge, L1_wt=0)
     return fitted_model
   else:
     fitted_model = model.fit()
