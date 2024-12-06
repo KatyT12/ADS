@@ -333,7 +333,7 @@ def run_on_lad_subset(connection, training, subset_training, subset_test, respon
   rmse = rmse_calc(prediction, actual)
 
   #print(corr, rmse, r2)
-  return [corr, rmse, r2, model.params]
+  return [corr, rmse, r2]
 
 
 def get_k_folded_results(connection, k, training, response, design_func, regularized = False, alpha = 0.01, weight = 1.0):
@@ -349,6 +349,5 @@ def get_k_folded_results(connection, k, training, response, design_func, regular
     ret.append(run_on_lad_subset(connection, training, training_data, test_data, response, design_func, regularized=regularized, alpha=alpha, weight=weight))
 
   dat = pd.DataFrame(ret)
-  pnum = len(ret[3])
-  dat.columns = ['corr', 'rmse', 'r2', *np.arange(pnum)]
+  dat.columns = ['corr', 'rmse', 'r2']
   return dat
