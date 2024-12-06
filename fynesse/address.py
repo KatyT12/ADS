@@ -17,6 +17,7 @@ import scipy.stats"""
 """Address a particular question that arises from the data"""
 from .assess import *
 from .access import *
+import statsmodels.api as sm
 
 # To be used for both training and prediction of student proportions
 def get_student_design_matrix(training):
