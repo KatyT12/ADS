@@ -191,7 +191,7 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
   return merged[merged['geography_code'].str.contains('E')]
 
 
-def fit_model_OLS(training, actual, t, design_func, augmented=None):
+def fit_model_OLS(connection, training, actual, t, design_func, augmented=None):
   if augmented is None:
     train = augment_training(training, actual)
     augmented = get_avg_price_lad(connection, train, ['T'])
