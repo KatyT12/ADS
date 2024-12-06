@@ -336,7 +336,7 @@ def run_on_lad_subset(connection, training, subset_training, subset_test, respon
   return [corr, rmse, r2]
 
 
-def get_k_folded_results(k, training, response, design_func, regularized = False, alpha = 0.01, weight = 1.0):
+def get_k_folded_results(connection, k, training, response, design_func, regularized = False, alpha = 0.01, weight = 1.0):
   n = len(training.index)
   splitted = split_data(k, n)
 
