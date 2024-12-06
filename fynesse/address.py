@@ -211,11 +211,11 @@ def fit_model_OLS(connection, training, actual, t, design_func, augmented=None):
 #   :param actual - The actual values trying to predict
 #   :param design_func - the function for generating a design matrix
 #   :param t - specific response variable of interest
-def predict_model_against_training(connection, training, actual, model, design_func, t, ax = None, model_name='', augmented=None):
+def predict_model_against_training(connection, training, nimby_df, model, design_func, t, ax = None, model_name='', augmented=None):
 
   # Augment with actual data and house prices
   if augmented is None:
-    train = augment_training(training, actual)
+    train = augment_training(training, nimby_df)
     augmented = get_avg_price_lad(connection, train, ['T'])
 
   # Retrieve predictions
@@ -227,8 +227,9 @@ def predict_model_against_training(connection, training, actual, model, design_f
     fig, ax = plt.subplots()
 
   corr = np.corrcoef(predicted, actual)
-  ax.scatter(predicted, actual)
-  ax.set_title(f'Correlation for {ax} ({corr})')
+  sns.regplot(x=actual, y=predicted, ax=ax, label='Best fit')
+  #ax.scatter(predicted, actual)
+  ax.set_title(f'Correlation for {t} ({round(corr[0][1], 3)})')
   ax.set_xlabel(f'Actual {t}')
   ax.set_xlabel(f'Predicted {t}')
 
