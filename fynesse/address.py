@@ -220,7 +220,7 @@ def predict_model_against_training(connection, training, actual, model, design_f
 
   # Retrieve predictions
   predicted = model.predict(design_func(augmented, augmented))
-  actual = training_census[t].to_numpy()
+  actual = augmented[t].to_numpy()
 
   # Plot correlation
   if ax is None:
