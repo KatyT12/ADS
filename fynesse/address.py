@@ -66,8 +66,8 @@ def query_for_location(connection, latitude, longitude, number, table):
 # design_func is the function which retrieves the design matrix
 def fit_binomial_model(connection, number, design_func):
   print('Collecting training data')
-  df = fynesse.assess.query_random_set(connection, number)
-  training = fynesse.assess.extract_training_data(df)
+  df = query_random_set(connection, number)
+  training = extract_training_data(df)
   X, actual = design_func(training)
   print('Fitting model')
   model = sm.GLM(actual, X, family = sm.families.Binomial())
@@ -100,7 +100,7 @@ def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_rati
 #   :param connection
 #   :param ax: Axis to plot on
 def get_avg_price_lad(connection, df, types):
-  prices = fynesse.assess.get_avg_price(connection)
+  prices = get_avg_price(connection)
   prices['avg(price)'] = prices['avg(price)'].astype(float)
   prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 
@@ -124,7 +124,7 @@ def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label 
     with codes as (select geography_code from nssec_data order by rand () limit {random_number})
     select avg(price), stddev(price), oa21, property_type from pp_data_oa_joined where oa21 in (select * from codes) group by oa21, property_type;
     '''
-  prices = fynesse.assess.query_to_dataframe(connection, query)
+  prices = query_to_dataframe(connection, query)
   prices['avg(price)'] = prices['avg(price)'].astype(float)
   prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 
@@ -151,7 +151,7 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
 #   :param connection
 #   :param ax: Axis to plot on
 def get_avg_price_lad(connection, df, types):
-  prices = fynesse.assess.get_avg_price(connection)
+  prices = get_avg_price(connection)
   prices['avg(price)'] = prices['avg(price)'].astype(float)
   prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 
@@ -175,7 +175,7 @@ def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label 
     with codes as (select geography_code from nssec_data order by rand () limit {random_number})
     select avg(price), stddev(price), oa21, property_type from pp_data_oa_joined where oa21 in (select * from codes) group by oa21, property_type;
     '''
-  prices = fynesse.assess.query_to_dataframe(connection, query)
+  prices = query_to_dataframe(connection, query)
   prices['avg(price)'] = prices['avg(price)'].astype(float)
   prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 
@@ -314,9 +314,9 @@ def run_on_lad_subset(connection, training, subset_training, subset_test, respon
   # Train
   
   if regularized:
-    model = fynesse.address.fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training, ridge=alpha, reg_weight=weight)
+    model = fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training, ridge=alpha, reg_weight=weight)
   else:
-    model = fynesse.address.fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training)
+    model = fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training)
   
   X = design_func(subset_test, training)
   prediction = model.predict(X)
