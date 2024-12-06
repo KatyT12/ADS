@@ -184,6 +184,11 @@ def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label 
   return merged.fillna(med)
 
 
+# Augment training data with the response variable, for convenience
+def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']):
+  merged = training.merge(nimby_df[['LAD23CD',*cols]], left_on='geography_code', right_on='LAD23CD')
+  return merged[merged['geography_code'].str.contains('E')]
+
 
 def fit_model_OLS(training, actual, t, design_func, augmented=None):
   if augmented is None:
@@ -197,11 +202,19 @@ def fit_model_OLS(training, actual, t, design_func, augmented=None):
   
   return fitted_model
 
-def predict_model_against_training(training, nimby_df, model, design_func, t, ax = None, model_name='', augmented=None):
+
+
+# Train and then predict on training data, plot correlation
+#   :param connection - The ongoing SQL connection
+#   :param training - training data which is adequate for design
+#   :param actual - The actual values trying to predict
+#   :param design_func - the function for generating a design matrix
+#   :param t - specific response variable of interest
+def predict_model_against_training(connection, training, actual, model, design_func, t, ax = None, model_name='', augmented=None):
 
   # Augment with actual data and house prices
   if augmented is None:
-    train = augment_training(training, nimby_df)
+    train = augment_training(training, actual)
     augmented = get_avg_price_lad(connection, train, ['T'])
 
   # Retrieve predictions
