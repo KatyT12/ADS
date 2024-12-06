@@ -192,7 +192,7 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
   return merged[merged['geography_code'].str.contains('E')]
 
 
-def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, ridge=None, reg_weight=0):
+def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, alphae=None, reg_weight=0):
   if augmented is None:
     train = augment_training(training, actual)
     augmented = get_avg_price_lad(connection, train, ['T'])
@@ -203,8 +203,8 @@ def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, 
   model = sm.OLS(augmented[t], design)
   
 
-  if ridge is not None:
-    fitted_model = model.fit_regularized(alpha=ridge, L1_wt=reg_weight)
+  if alpha is not None:
+    fitted_model = model.fit_regularized(alpha=alpha, L1_wt=reg_weight)
     return fitted_model
   else:
     fitted_model = model.fit()
@@ -314,7 +314,7 @@ def run_on_lad_subset(connection, training, subset_training, subset_test, respon
   # Train
   
   if regularized:
-    model = fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training, ridge=alpha, reg_weight=weight)
+    model = fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training, alpha=alpha, reg_weight=weight)
   else:
     model = fit_model_OLS(connection, subset_training, subset_training, response_col, design_func, augmented=subset_training)
   
