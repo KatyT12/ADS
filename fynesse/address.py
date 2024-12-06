@@ -90,3 +90,130 @@ def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_rati
     result = result.merge(df[['geography_code', *census_tags, pred_var]].drop_duplicates(), left_on='geography_code', right_on='geography_code')
     result['training'] = result[pred_var]
   return result
+
+
+
+# Plot the area and points of interest onto a graph
+#   :param connection - The ongoing SQL connection
+#   :param connection
+#   :param ax: Axis to plot on
+def get_avg_price_lad(connection, df, types):
+  prices = fynesse.assess.get_avg_price(connection)
+  prices['avg(price)'] = prices['avg(price)'].astype(float)
+  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
+
+  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
+  merged = df.merge(prices, left_on='geography_code', right_on='lad23', how='left')
+  
+  med = merged['avg(price)'].median()
+  return merged.fillna(med)
+
+# For specific codes, or optionally for a random set of geography codes, which may be helpful later
+def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label ='geography_code'):
+  query = ''
+  if random_number is None:
+    codes_string = ', '.join(["'" + s + "'" for s in codes])
+    query = f'''
+      with select
+      select avg(price), stddev(price), oa23, property_type from pp_data_oa_joined group by lad23, property_type where oa in ({codes_string});
+    '''
+  else:
+    query = f'''
+    with codes as (select geography_code from nssec_data order by rand () limit {random_number})
+    select avg(price), stddev(price), oa21, property_type from pp_data_oa_joined where oa21 in (select * from codes) group by oa21, property_type;
+    '''
+  prices = fynesse.assess.query_to_dataframe(connection, query)
+  prices['avg(price)'] = prices['avg(price)'].astype(float)
+  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
+
+  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
+
+  merged = df.merge(prices, left_on=label, right_on='oa21', how='left')
+  med = merged['avg(price)'].median()
+  return merged.fillna(med)
+
+
+
+
+
+
+
+
+def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']):
+  merged = training.merge(nimby_df[['LAD23CD',*cols]], left_on='geography_code', right_on='LAD23CD')  
+  return merged[merged['geography_code'].str.contains('E')]
+
+
+# Retrieve the average price for each postcode, get the median
+#   :param connection - The ongoing SQL connection
+#   :param connection
+#   :param ax: Axis to plot on
+def get_avg_price_lad(connection, df, types):
+  prices = fynesse.assess.get_avg_price(connection)
+  prices['avg(price)'] = prices['avg(price)'].astype(float)
+  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
+
+  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
+  merged = df.merge(prices, left_on='geography_code', right_on='lad23', how='left')
+  
+  med = merged['avg(price)'].median()
+  return merged.fillna(med)
+
+# For specific codes, or optionally for a random set of geography codes, which may be helpful later
+def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label ='geography_code'):
+  query = ''
+  if random_number is None:
+    codes_string = ', '.join(["'" + s + "'" for s in codes])
+    query = f'''
+      with select
+      select avg(price), stddev(price), oa23, property_type from pp_data_oa_joined group by lad23, property_type where oa in ({codes_string});
+    '''
+  else:
+    query = f'''
+    with codes as (select geography_code from nssec_data order by rand () limit {random_number})
+    select avg(price), stddev(price), oa21, property_type from pp_data_oa_joined where oa21 in (select * from codes) group by oa21, property_type;
+    '''
+  prices = fynesse.assess.query_to_dataframe(connection, query)
+  prices['avg(price)'] = prices['avg(price)'].astype(float)
+  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
+
+  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
+
+  merged = df.merge(prices, left_on=label, right_on='oa21', how='left')
+  med = merged['avg(price)'].median()
+  return merged.fillna(med)
+
+
+
+def fit_model_OLS(training, actual, t, design_func, augmented=None):
+  if augmented is None:
+    train = augment_training(training, actual)
+    augmented = get_avg_price_lad(connection, train, ['T'])
+
+  design = design_func(augmented, augmented)
+  
+  model = sm.OLS(augmented[t], design)
+  fitted_model = model.fit()
+  
+  return fitted_model
+
+def predict_model_against_training(training, nimby_df, model, design_func, t, ax = None, model_name='', augmented=None):
+
+  # Augment with actual data and house prices
+  if augmented is None:
+    train = augment_training(training, nimby_df)
+    augmented = get_avg_price_lad(connection, train, ['T'])
+
+  # Retrieve predictions
+  predicted = model.predict(design_func(augmented, augmented))
+  actual = training_census[t].to_numpy()
+
+  # Plot correlation
+  if ax is None:
+    fig, ax = plt.subplots()
+
+  corr = np.corrcoef(predicted, actual)
+  ax.scatter(predicted, actual)
+  ax.set_title(f'Correlation for {ax} ({corr})')
+  ax.set_xlabel(f'Actual {t}')
+  ax.set_xlabel(f'Predicted {t}')
