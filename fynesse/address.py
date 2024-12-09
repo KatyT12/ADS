@@ -379,14 +379,15 @@ def get_loc(connection, oa):
   return (d.iloc[0]['latitude'], d.iloc[0]['longitude'])
 
 # Retrieve relevant price paid entries
-def get_pp_entries_ordered(connection, oas, property_types):
+def get_pp_entries_ordered(connection, oas, property_types, year_start=2023, year_end=2024):
   types_string = ', '.join(["'" + s + "'" for s in property_types])
   oa_string = ', '.join(["'" + s + "'" for s in oas])
   query = f'''
-    select property_type, price, oa21 from pp_data_oa_joined where oa21 in ({oa_string}) and property_type in ({types_string})
+    select property_type, price, oa21 from pp_data_oa_joined where oa21 in ({oa_string}) and property_type in ({types_string}) and date_of_transfer between "{year_start}-01-01" and "{year_end}-01-01"
     order by field(oa21, {oa_string})
   '''
-  return query_to_dataframe(connection, query)
+  return fynesse.assess.query_to_dataframe(connection, query)
+
 
 def find_median_price_oa(connection, oa, types, number_search=20, number_med=10, default=200000):
   latlong = get_loc(connection, oa)
