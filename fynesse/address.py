@@ -150,8 +150,8 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
 #   :param connection - The ongoing SQL connection
 #   :param connection
 #   :param ax: Axis to plot on
-def get_avg_price_lad(connection, df, types):
-  prices = get_avg_price(connection)
+def get_avg_price_lad(connection, df, types, year_start=2023, year_end=2024):
+  prices = get_avg_price(connection, year_start=2023, year_end=2024)
   prices['avg(price)'] = prices['avg(price)'].astype(float)
   prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 

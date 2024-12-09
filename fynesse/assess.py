@@ -516,9 +516,9 @@ def plot_colours(gdf, df, key='LAD23CD', england_only=True, ax = None):
 
 
 # -------------- House prices
-def get_avg_price(connection):
-  query = '''
-    select avg(price), stddev(price), lad23, property_type from pp_data_oa_joined group by lad23, property_type;
+def get_avg_price(connection, year_start=2023, year_end=2024):
+  query = f'''
+    select avg(price), stddev(price), lad23, property_type from pp_data_oa_joined where date_of_transfer between '{year_start}-01-01' and '{year_end}-01-01' group by lad23, property_type;
   '''
   return query_to_dataframe(connection, query)
 
