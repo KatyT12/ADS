@@ -95,21 +95,6 @@ def extract_training_data(df, census_tags=['no_vehicle_ratio', 'one_vehicle_rati
 
 
 
-# Plot the area and points of interest onto a graph
-#   :param connection - The ongoing SQL connection
-#   :param connection
-#   :param ax: Axis to plot on
-def get_avg_price_lad(connection, df, types):
-  prices = get_avg_price(connection)
-  prices['avg(price)'] = prices['avg(price)'].astype(float)
-  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
-
-  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
-  merged = df.merge(prices, left_on='geography_code', right_on='lad23', how='left')
-  
-  med = merged['avg(price)'].median()
-  return merged.fillna(med)
-
 # For specific codes, or optionally for a random set of geography codes, which may be helpful later
 def get_avg_price_oa(connection, df, types, codes=[], random_number=None, label ='geography_code'):
   query = ''
@@ -241,19 +226,7 @@ def predict_model_against_training(connection, training, nimby_df, model, design
   ax.set_xlabel(f'Predicted {t}')
 
 
-# Augment LAD census data with the average price. Can affort a full group by SQL query
-def get_avg_price_lad(connection, df, types):
-  # SQL join
-  prices = get_avg_price(connection)
-  prices['avg(price)'] = prices['avg(price)'].astype(float)
-  prices['stddev(price)'] = prices['stddev(price)'].astype(float)
 
-  # Merge, aggregate by property type. Slightly dodgy aggre
-  prices = prices[prices['property_type'].isin(types)].drop('property_type',axis=1).groupby('lad23', as_index=False).mean()
-  merged = df.merge(prices, left_on='geography_code', right_on='lad23', how='left')
-
-  med = merged['avg(price)'].median()
-  return merged.fillna(med)
 
 
 
