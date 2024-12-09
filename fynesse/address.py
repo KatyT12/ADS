@@ -345,11 +345,21 @@ def retrieve_best_alpha(connection, training, response, weight, design_func, tes
 
 def get_loc(connection, oa):
   query = f'''
-  select latitude, longitude from nssec_data where geography_code = '{oa}' limit 1;
+  select latitude, longitude from nssec_data where geography_code = '{oa}';
   '''
   d = query_to_dataframe(connection, query)
   d = d.astype(float)
   return (d.iloc[0]['latitude'], d.iloc[0]['longitude'])
+
+def get_locations(connection, oas):
+  oa_string = ', '.join(["'" + s + "'" for s in oas])
+  query = f'''
+  select geography_code, latitude, longitude from nssec_data where geography_code in ({oa_string}) limit 1;
+  '''
+  d = query_to_dataframe(connection, query)
+  d['latitude'] = d['latitude'].astype(float)
+  d['longitude'] = d['longitude'].astype(float)
+  return d
 
 # Retrieve relevant price paid entries
 def get_pp_entries_ordered(connection, oas, property_types, year_start=2023, year_end=2024):
@@ -384,5 +394,89 @@ def join_oa_census_with_pp(connection, census_data, oas, all=False, year_start=2
     '''
   dat = query_to_dataframe(connection, query)
   ret = census_data.merge(dat[['geography_code', 'median_price']], left_on='geography_code', right_on='geography_code')
-  ret['avg(price)'] = ret['median_price']
+  ret['avg(price)'] = ret['median_price'].astype(float)
   return ret
+
+
+#----------- Simple model
+
+def retrieve_lad23_for_oa(connection, output_areas):
+  output_areas_string = ', '.join(["'" + s + "'" for s in output_areas])
+  query = f'''
+    select oa21, lad23 from oa21_to_lad23_data where oa21 in ({output_areas_string})
+  '''
+  return query_to_dataframe(connection, query)
+
+
+def simplest_predict(connection, training, output_areas, response='rag', code_label='lad23'):
+  lad_mapping = retrieve_lad23_for_oa(connection, output_areas)
+  return training.merge(lad_mapping, left_on= code_label,right_on='lad23')[['oa21','lad23',response]]
+#---
+
+def compare_pred_to_simple(connection, oa_data, training, model, design_func, model_title='Given model', label='rag'):
+  X = design_func(oa_data, training)
+  pred = model.predict(X)
+  pred_df = oa_data.copy()
+  pred_df['prediction'] = pred
+  simple_predict = simplest_predict(connection, training, oa_data['geography_code'], response=label)
+  comparison = simple_predict.merge(pred_df, left_on='oa21', right_on='geography_code')
+  comparison['diff'] = comparison['prediction'] - comparison[label]
+  
+  # merge with longlat
+  comparison = comparison.merge(get_locations(connection, comparison['oa21']), left_on='oa21', right_on='geography_code')
+
+  # Plot General scatter plot
+  fig, ax = plt.subplots(ncols=2, figsize=(15,7))
+  
+  ax[0].scatter(comparison[label], comparison['prediction'], s =3)
+  ax[0].set_xlabel('Simple model prediction (LAD23)')
+  ax[0].set_ylabel(f'{model_title} prediction')
+  ax[0].set_title('Prediction comparison')
+
+
+  # Plot geographic differences plot
+  
+  # Percentiles
+  number = 10
+  labels = np.arange(number)
+  comparison['pos'] = pd.qcut(comparison['diff'].to_numpy(), number, labels=labels)
+  comparison['neg'] = pd.qcut(-comparison['diff'].to_numpy(), number, labels=labels)
+
+  comparison['color'] = 'black'
+  comparison['alpha'] = 0.3
+
+
+  comparison.loc[comparison['pos'] >= number-2, 'color'] = 'red'
+  comparison.loc[comparison['pos'] >= number-2, 'alpha'] = 0.7
+  comparison.loc[comparison['neg'] >= number-2, 'alpha'] = 0.7
+  comparison.loc[comparison['neg'] >= number-2, 'color'] = 'blue'
+
+  ax[1].scatter(comparison['longitude'], comparison['latitude'], s = 4, c=comparison['color'], alpha=comparison['alpha'])
+
+  # LAD boundaries
+  gdf = retrieve_map_data()
+  gdf = gdf.to_crs(epsg=4326)
+  gdf[gdf['LAD23CD'].str.contains('E')].plot(alpha=0.2,ax=ax[1],edgecolor='dimgray')
+
+  leg = [
+      mpatches.Patch(color='grey', label='Insignificant difference'),
+      mpatches.Patch(color='blue', label='Prediction much lower than LAD'),
+      mpatches.Patch(color='red', label='Prediction much higher than LAD'),
+  ]
+  
+  
+  lon = inset_axes(ax[1], width="30%", height="30%", loc="center left") 
+  lon.set_xticks([])
+  lon.set_yticks([])
+
+  london_lads = in_london(gdf, name_col='LAD23NM')
+  
+  london_lads.plot(alpha=0.2,ax=lon,edgecolor='dimgray')
+  df = london_lads.merge(comparison, left_on='LAD23CD', right_on='lad23')
+  lon.scatter(df['longitude'], df['latitude'], s = 4, c=df['color'], alpha=df['alpha'])
+  
+  ax[1].legend(handles=leg)
+  ax[1].set_title('Geographic comparison (based on percentiles)')
+
+  
+  return comparison
