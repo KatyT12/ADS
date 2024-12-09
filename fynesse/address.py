@@ -408,17 +408,17 @@ def retrieve_lad23_for_oa(connection, output_areas):
   return query_to_dataframe(connection, query)
 
 
-def simplest_predict(connection, training, output_areas, response='rag', code_label='LAD23CD'):
+def simplest_predict(connection, nimby_df, output_areas, response='rag', code_label='LAD23CD'):
   lad_mapping = retrieve_lad23_for_oa(connection, output_areas)
-  return training.merge(lad_mapping, left_on= code_label,right_on='lad23')[['oa21','lad23',response]]
+  return nimby_df.merge(lad_mapping, left_on= code_label,right_on='lad23')[['oa21','LAD23CD',response]]
 #---
 
-def compare_pred_to_simple(connection, oa_data, training, model, design_func, model_title='Given model', label='rag'):
+def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag'):
   X = design_func(oa_data, training)
   pred = model.predict(X)
   pred_df = oa_data.copy()
   pred_df['prediction'] = pred
-  simple_predict = simplest_predict(connection, training, oa_data['geography_code'], response=label)
+  simple_predict = simplest_predict(connection, nimby_df, oa_data['geography_code'], response=label)
   comparison = simple_predict.merge(pred_df, left_on='oa21', right_on='geography_code')
   comparison['diff'] = comparison['prediction'] - comparison[label]
   
@@ -472,7 +472,7 @@ def compare_pred_to_simple(connection, oa_data, training, model, design_func, mo
   london_lads = in_london(gdf, name_col='LAD23NM')
   
   london_lads.plot(alpha=0.2,ax=lon,edgecolor='dimgray')
-  df = london_lads.merge(comparison, left_on='LAD23CD', right_on='lad23')
+  df = london_lads.merge(comparison, left_on='LAD23CD', right_on='LAD23CD')
   lon.scatter(df['longitude'], df['latitude'], s = 4, c=df['color'], alpha=df['alpha'])
   
   ax[1].legend(handles=leg)
