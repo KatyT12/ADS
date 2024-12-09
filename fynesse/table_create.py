@@ -66,6 +66,7 @@ def create_oa_latlong_table(conn):
   conn.cursor().execute(auto_increment)
   conn.commit()
 
+
 # Could generalise these loads, but that might cause more issues than make life easier
 def load_oa_coord_data_to_sql(conn, csv_file):
   load_query = f"""LOAD DATA LOCAL INFILE "{csv_file}" INTO TABLE `oa_latlong_data` FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES STARTING BY '' TERMINATED BY '\n' IGNORE 1 LINES;"""
@@ -379,6 +380,31 @@ def postcode_join(conn, year):
   conn.commit()
   print('Data stored for year: ' + str(year))
 
+def create_oa_to_lad_data(conn):
+  drop = "DROP TABLE IF EXISTS oa21_to_lad23_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `oa21_to_lad23_data` (
+            oa21 VARCHAR(10) NOT NULL,
+            lad23 VARCHAR(10) NOT NULL,
+            lsoa21 VARCHAR(10) NOT NULL,
+            msoa21 VARCHAR(10) NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE oa21_to_lad23_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE oa21_to_lad23_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+  index_oa = 'create index idx_oa_to_lad_oa on oa21_to_lad23_data(oa21)'
+  index_lad = 'create index idx_oa_to_lad_lad on oa21_to_lad23_data(lad23)'
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
+  conn.cursor().execute(auto_increment)
+
+  # Also best to index
+  conn.cursor().execute(index_oa)
+  conn.cursor().execute(index_lad)
+  conn.commit()
 
 def get_census_combined_cols():
   cols = ['census_date', 'geography_code', 'age:total']
@@ -443,5 +469,27 @@ def create_census_combined_data(conn):
   conn.cursor().execute(drop)
   conn.cursor().execute(query)
   conn.cursor().execute(add_primary)
+  conn.cursor().execute(auto_increment)
+  conn.commit()
+
+
+def create_oa_median_price_data(conn):
+  drop = "DROP TABLE IF EXISTS oa_median_price_data"
+  create_query = """
+          CREATE TABLE IF NOT EXISTS `oa_median_price_data` (
+            geography_code tinytext COLLATE utf8_bin NOT NULL,
+            year_start INT NOT NULL,
+            year_end INT NOT NULL,
+            median_price decimal(16,5) NOT NULL,
+            property_types VARCHAR(6) COLLATE utf8_bin NOT NULL,
+            db_id bigint(20) unsigned NOT NULL
+          ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=1"""
+
+  add_primary_key = "ALTER TABLE oa_median_price_data ADD PRIMARY KEY (db_id)";
+  auto_increment = "ALTER TABLE oa_median_price_data MODIFY db_id bigint(20) unsigned NOT NULL AUTO_INCREMENT, AUTO_INCREMENT = 1";
+
+  conn.cursor().execute(drop)
+  conn.cursor().execute(create_query)
+  conn.cursor().execute(add_primary_key)
   conn.cursor().execute(auto_increment)
   conn.commit()
