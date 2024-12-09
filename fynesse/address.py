@@ -389,10 +389,10 @@ def get_pp_entries_ordered(connection, oas, property_types, year_start=2023, yea
   return fynesse.assess.query_to_dataframe(connection, query)
 
 
-def find_median_price_oa(connection, oa, types, number_search=20, number_med=10, default=200000):
+def find_median_price_oa(connection, oa, types, number_search=20, number_med=10, default=200000, year_start=2023, year_end=2024):
   latlong = get_loc(connection, oa)
   nearest = find_nearest_output_areas(connection, *latlong, number_search)
-  entries = get_pp_entries_ordered(connection, nearest['geography_code'], types)
+  entries = get_pp_entries_ordered(connection, nearest['geography_code'], types, year_start=year_start, year_end=year_end)
   if len(entries.index) < number_med:
     return default # Default value if not enough found
   else:
