@@ -408,7 +408,7 @@ def retrieve_lad23_for_oa(connection, output_areas):
   return query_to_dataframe(connection, query)
 
 
-def simplest_predict(connection, training, output_areas, response='rag', code_label='lad23'):
+def simplest_predict(connection, training, output_areas, response='rag', code_label='LAD23CD'):
   lad_mapping = retrieve_lad23_for_oa(connection, output_areas)
   return training.merge(lad_mapping, left_on= code_label,right_on='lad23')[['oa21','lad23',response]]
 #---
