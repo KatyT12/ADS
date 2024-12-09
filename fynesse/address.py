@@ -386,7 +386,7 @@ def get_pp_entries_ordered(connection, oas, property_types, year_start=2023, yea
     select property_type, price, oa21 from pp_data_oa_joined where oa21 in ({oa_string}) and property_type in ({types_string}) and date_of_transfer between "{year_start}-01-01" and "{year_end}-01-01"
     order by field(oa21, {oa_string})
   '''
-  return fynesse.assess.query_to_dataframe(connection, query)
+  return query_to_dataframe(connection, query)
 
 
 def find_median_price_oa(connection, oa, types, number_search=20, number_med=10, default=200000, year_start=2023, year_end=2024):
