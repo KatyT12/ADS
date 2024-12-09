@@ -397,3 +397,18 @@ def find_median_price_oa(connection, oa, types, number_search=20, number_med=10,
     return default # Default value if not enough found
   else:
     return entries.iloc[:number_med]['price'].median()
+
+def join_oa_census_with_pp(connection, census_data, oas, all=False, year_start=2023, year_end=2024):
+  query = ''
+  if all:
+    query = f'''
+      select * from oa_median_price_data where year_start = {year_start} and year_end={year_end}
+    '''
+  else:
+    oa_string = ', '.join(["'" + s + "'" for s in oas])
+    query = f'''
+      select * from oa_median_price_data where year_start = {year_start} and year_end={year_end} where geography_code in ({oa_string})
+    '''
+  dat = fynesse.assess.query_to_dataframe(connection, query)
+  ret = census_data.merge(dat[['geography_code', 'median_price']], left_on='geography_code', right_on='geography_code')
+  return ret
