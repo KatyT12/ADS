@@ -354,7 +354,7 @@ def get_loc(connection, oa):
 def get_locations(connection, oas):
   oa_string = ', '.join(["'" + s + "'" for s in oas])
   query = f'''
-  select geography_code, latitude, longitude from nssec_data where geography_code in ({oa_string}) limit 1;
+  select geography_code, latitude, longitude from nssec_data where geography_code in ({oa_string});
   '''
   d = query_to_dataframe(connection, query)
   d['latitude'] = d['latitude'].astype(float)
