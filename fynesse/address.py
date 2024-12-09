@@ -411,4 +411,5 @@ def join_oa_census_with_pp(connection, census_data, oas, all=False, year_start=2
     '''
   dat = query_to_dataframe(connection, query)
   ret = census_data.merge(dat[['geography_code', 'median_price']], left_on='geography_code', right_on='geography_code')
+  ret['avg(price)'] = ret['median_price']
   return ret
