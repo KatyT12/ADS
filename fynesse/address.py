@@ -365,3 +365,34 @@ def retrieve_best_alpha(connection, training, response, weight, design_func, tes
   results = pd.concat(outputs)
   results['alpha'] = values
   return results.reset_index()
+
+
+
+  #--------------- Downscaling average price
+
+  def get_loc(connection, oa):
+  query = f'''
+  select latitude, longitude from nssec_data where geography_code = '{oa}' limit 1;
+  '''
+  d = query_to_dataframe(connection, query)
+  d = d.astype(float)
+  return (d.iloc[0]['latitude'], d.iloc[0]['longitude'])
+
+# Retrieve relevant price paid entries
+def get_pp_entries_ordered(connection, oas, property_types):
+  types_string = ', '.join(["'" + s + "'" for s in property_types])
+  oa_string = ', '.join(["'" + s + "'" for s in oas])
+  query = f'''
+    select property_type, price, oa21 from pp_data_oa_joined where oa21 in ({oa_string}) and property_type in ({types_string})
+    order by field(oa21, {oa_string})
+  '''
+  return query_to_dataframe(connection, query)
+
+def find_median_price_oa(connection, oa, types, number_search=20, number_med=10, default=200000):
+  latlong = get_loc(connection, oa)
+  nearest = find_nearest_output_areas(connection, *latlong, number_search)
+  entries = get_pp_entries_ordered(connection, nearest['geography_code'], types)
+  if len(entries.index) < number_med:
+    return default # Default value if not enough found
+  else:
+    return entries.iloc[:number_med]['price'].median()
