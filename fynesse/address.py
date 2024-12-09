@@ -370,7 +370,7 @@ def retrieve_best_alpha(connection, training, response, weight, design_func, tes
 
   #--------------- Downscaling average price
 
-  def get_loc(connection, oa):
+def get_loc(connection, oa):
   query = f'''
   select latitude, longitude from nssec_data where geography_code = '{oa}' limit 1;
   '''
