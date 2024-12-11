@@ -17,6 +17,7 @@ import scipy.stats"""
 """Address a particular question that arises from the data"""
 from .assess import *
 from .access import *
+from .util import *
 from sklearn.metrics import r2_score
 import statsmodels.api as sm
 
@@ -437,7 +438,43 @@ def simplest_predict(connection, nimby_df, output_areas, response='rag', code_la
   return nimby_df.merge(lad_mapping, left_on= code_label,right_on='lad23')[['oa21','LAD23CD',response]]
 #---
 
-def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag'):
+#-------------- Comparison plots
+
+def plot_location(connection, comparison, label):
+  fig, ax = plt.subplots(ncols=3, figsize=(18,7))
+  
+  # Plot histogram
+  comparison['prediction'].hist(bins=20, ax=ax[0], alpha=0.7, edgecolor='black')
+  ax[0].axvline(x=comparison[label][0], color='red', label='LAD score')
+  ax[0].legend()
+  ax[0].set_title('Histogram of output area predictions')
+
+  # Plot differences
+  get_colour_outliers(comparison, 10, (3,3), 'diff')
+  # Map data for output areas
+  gdf = retrieve_map_data(link= 'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Output_Areas_2021_EW_BFC_V8/FeatureServer/replicafilescache/Output_Areas_2021_EW_BFC_V8_-9054797207862162063.zip', dir='OA_boundaries', file='OA_2021_EW_BFC_V8.shp')
+  m = gdf.merge(comparison, left_on='OA21CD',right_on='oa21')
+  m.plot(ax=ax[1], color=comparison['colours'])
+  ax[1].set_title('Output area differences')
+  leg = [
+        mpatches.Patch(color='grey', label='Insignificant difference'),
+        mpatches.Patch(color='blue', label='Prediction much lower than LAD'),
+        mpatches.Patch(color='red', label='Prediction much higher than LAD'),
+  ]
+  ax[1].legend(handles=leg)
+
+  # Population density map
+  ax[2].set_title('Population density map')
+  census = get_census_data('oa', '2021')
+  census.columns = get_census_combined_cols() # Consistency with SQL columns
+  
+  with_total_pop = m[['oa21', 'geometry']].merge(census[['age:total', 'geography_code']], left_on='oa21', right_on='geography_code')
+  with_total_pop['value'] = with_total_pop['age:total']/with_total_pop['geometry'].area
+  get_colour_percentiles(with_total_pop, 10, (0,0,1), (1,0,0), 'value')
+  m.plot(ax=ax[2], color=with_total_pop['colours'])
+
+
+def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None):
   X = design_func(oa_data, training)
   pred = model.predict(X)
   pred_df = oa_data.copy()
@@ -449,60 +486,48 @@ def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, desig
   # merge with longlat
   comparison = comparison.merge(get_locations(connection, comparison['oa21']), left_on='oa21', right_on='geography_code')
 
-  # Plot General scatter plot
-  fig, ax = plt.subplots(ncols=2, figsize=(15,7))
-  
-  ax[0].scatter(comparison[label], comparison['prediction'], s =3)
-  ax[0].set_xlabel('Simple model prediction (LAD23)')
-  ax[0].set_ylabel(f'{model_title} prediction')
-  ax[0].set_title('Prediction comparison')
+  if location is None:
+    # Plot General scatter plot
+    fig, ax = plt.subplots(ncols=2, figsize=(15,7))
+    
+    ax[0].scatter(comparison[label], comparison['prediction'], s =3)
+    ax[0].set_xlabel('Simple model prediction (LAD23)')
+    ax[0].set_ylabel(f'{model_title} prediction')
+    ax[0].set_title('Prediction comparison')
 
 
-  # Plot geographic differences plot
-  
-  # Percentiles
-  number = 10
-  labels = np.arange(number)
-  comparison['pos'] = pd.qcut(comparison['diff'].to_numpy(), number, labels=labels)
-  comparison['neg'] = pd.qcut(-comparison['diff'].to_numpy(), number, labels=labels)
+    # Plot geographic differences plot
+    get_colour_outliers(comparison, 10, (2,2), 'diff', alpha=(0.3, 0.7))
+    ax[1].scatter(comparison['longitude'], comparison['latitude'], s = 4, c=comparison['colours'], alpha=comparison['alpha'])
 
-  comparison['color'] = 'black'
-  comparison['alpha'] = 0.3
+    # LAD boundaries
+    gdf = retrieve_map_data()
+    gdf = gdf.to_crs(epsg=4326)
+    gdf[gdf['LAD23CD'].str.contains('E')].plot(alpha=0.2,ax=ax[1],edgecolor='dimgray')
 
+    leg = [
+        mpatches.Patch(color='grey', label='Insignificant difference'),
+        mpatches.Patch(color='blue', label='Prediction much lower than LAD'),
+        mpatches.Patch(color='red', label='Prediction much higher than LAD'),
+    ]
+    
+    
+    lon = inset_axes(ax[1], width="30%", height="30%", loc="center left") 
+    lon.set_xticks([])
+    lon.set_yticks([])
 
-  comparison.loc[comparison['pos'] >= number-2, 'color'] = 'red'
-  comparison.loc[comparison['pos'] >= number-2, 'alpha'] = 0.7
-  comparison.loc[comparison['neg'] >= number-2, 'alpha'] = 0.7
-  comparison.loc[comparison['neg'] >= number-2, 'color'] = 'blue'
+    london_lads = in_london(gdf, name_col='LAD23NM')
+    
+    london_lads.plot(alpha=0.2,ax=lon,edgecolor='dimgray')
+    df = london_lads.merge(comparison, left_on='LAD23CD', right_on='LAD23CD')
+    lon.scatter(df['longitude'], df['latitude'], s = 4, c=df['colours'], alpha=df['alpha'])
+    
+    ax[1].legend(handles=leg)
+    ax[1].set_title('Geographic comparison (based on percentiles)')
 
-  ax[1].scatter(comparison['longitude'], comparison['latitude'], s = 4, c=comparison['color'], alpha=comparison['alpha'])
+  else:
+   plot_location(connection, comparison, label) 
 
-  # LAD boundaries
-  gdf = retrieve_map_data()
-  gdf = gdf.to_crs(epsg=4326)
-  gdf[gdf['LAD23CD'].str.contains('E')].plot(alpha=0.2,ax=ax[1],edgecolor='dimgray')
-
-  leg = [
-      mpatches.Patch(color='grey', label='Insignificant difference'),
-      mpatches.Patch(color='blue', label='Prediction much lower than LAD'),
-      mpatches.Patch(color='red', label='Prediction much higher than LAD'),
-  ]
-  
-  
-  lon = inset_axes(ax[1], width="30%", height="30%", loc="center left") 
-  lon.set_xticks([])
-  lon.set_yticks([])
-
-  london_lads = in_london(gdf, name_col='LAD23NM')
-  
-  london_lads.plot(alpha=0.2,ax=lon,edgecolor='dimgray')
-  df = london_lads.merge(comparison, left_on='LAD23CD', right_on='LAD23CD')
-  lon.scatter(df['longitude'], df['latitude'], s = 4, c=df['color'], alpha=df['alpha'])
-  
-  ax[1].legend(handles=leg)
-  ax[1].set_title('Geographic comparison (based on percentiles)')
-
-  
   return comparison
 
 
