@@ -397,6 +397,30 @@ def join_oa_census_with_pp(connection, census_data, oas, all=False, year_start=2
   ret['avg(price)'] = ret['median_price'].astype(float)
   return ret
 
+# Upload median price for output areas
+# Either random output areas, or output areas for a specific location
+def upload_oa_median_price(connection, random_number = None, lad = None, year_start=2022, year_end=2024, p_types=['T']):
+  
+  if random_number is None:
+    query = f'''
+    select oa21 from oa21_to_lad23_data where lad23 = '{lad}'
+    '''
+    codes = query_to_dataframe(connection, query)['oa21']
+  else:
+    codes = random_query_table(connection, number = random_number, table='nssec_data')['geography_code']
+  
+  df = {}
+  count = 0
+  for c in codes:
+    print(c, count)
+    df[c] = find_median_price_oa(connection, c, p_types, year_start=year_start, year_end=year_end)    
+    count+=1
+  
+  rows = [ {'code': k, 'year_start': year_start, 'year_end': year_end, 'median': v, 'property_types': 'T'} for k,v in df.items()]
+  pd.DataFrame(rows).to_csv('temp.csv',index=False)
+  load_census_data_to_sql(connection, 'temp.csv', 'oa_median_price_data')
+
+
 
 #----------- Simple model
 
@@ -480,3 +504,5 @@ def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, desig
 
   
   return comparison
+
+
