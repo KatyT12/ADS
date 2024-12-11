@@ -539,7 +539,7 @@ def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, desig
   return comparison
 
 
-def compare_location(connection, lad, train, nimby_df, census_oa, model, design_func=get_design_1, points=None, location=''):
+def compare_location(connection, lad, train, nimby_df, census_oa, model, design_func, points=None, location=''):
   codes = get_codes_from_lad(connection, lad=lad)
   census_oa['oa21'] = census_oa['geography_code']
   oa_data = join_oa_census_with_pp(connection, census_oa[census_oa['geography_code'].isin(codes)], [], all=True, year_start=2022, year_end=2024).drop('oa21', axis=1).drop_duplicates()
