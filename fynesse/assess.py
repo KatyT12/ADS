@@ -310,7 +310,7 @@ def get_codes_from_lad(connection, lad):
   query = f'''
     select oa21 from oa21_to_lad23_data where lad23 = '{lad}'
     '''
-  codes = fynesse.assess.query_to_dataframe(connection, query)['oa21']
+  codes = query_to_dataframe(connection, query)['oa21']
   return codes
 
 def random_query_table(conn, number, table):
