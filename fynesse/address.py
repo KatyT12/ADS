@@ -482,7 +482,7 @@ def plot_location(connection, comparison, label, points = None, location=''):
 
   m.plot(ax=ax[2], color=with_total_pop['colours'])
 
-def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None):
+def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None, points=None):
   X = design_func(oa_data, training)
   pred = model.predict(X)
   pred_df = oa_data.copy()
