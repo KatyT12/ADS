@@ -30,7 +30,7 @@ def get_colour_percentiles(df, number, start, end, num_col, col_name='colours'):
   start_col = np.array([*start])
   end_col = np.array([*end])
   colors = [ tuple(x) for x in np.linspace(start_col, end_col, number)]
-  df['colours'] = pd.qcut(df[num_col].to_numpy(), number, labels=colors)
+  df[col_name] = pd.qcut(df[num_col].to_numpy(), number, labels=colors)
 
 def get_colour_outliers(df, number, cutoff, num_col, high='red', low='blue', col_name='colours', alpha=None):
   low_col = np.array([*low])
