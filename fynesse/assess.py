@@ -306,6 +306,13 @@ def query_random_set(conn, number, table='household_vehicle_data', pred_table='n
   '''
   return query_to_dataframe(conn, query)
 
+def get_codes_from_lad(connection, lad):
+  query = f'''
+    select oa21 from oa21_to_lad23_data where lad23 = '{lad}'
+    '''
+  codes = fynesse.assess.query_to_dataframe(connection, query)['oa21']
+  return codes
+
 def random_query_table(conn, number, table):
   query = f'''
     select *
