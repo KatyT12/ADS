@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 def flatten_tags(tags):
   tags_list = []
   for t in tags:
