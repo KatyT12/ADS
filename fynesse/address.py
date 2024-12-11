@@ -440,9 +440,9 @@ def simplest_predict(connection, nimby_df, output_areas, response='rag', code_la
 
 #-------------- Comparison plots
 
-def plot_location(connection, comparison, label):
+def plot_location(connection, comparison, label, points = None, location=''):
   fig, ax = plt.subplots(ncols=3, figsize=(18,7))
-  
+  fig.suptitle(f'{location} prediction comparison', fontsize=16)
   # Plot histogram
   comparison['prediction'].hist(bins=20, ax=ax[0], alpha=0.7, edgecolor='black')
   ax[0].axvline(x=comparison[label][0], color='red', label='LAD score')
@@ -451,8 +451,13 @@ def plot_location(connection, comparison, label):
 
   # Plot differences
   get_colour_outliers(comparison, 10, (3,3), 'diff')
+  
   # Map data for output areas
   gdf = retrieve_map_data(link= 'https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Output_Areas_2021_EW_BFC_V8/FeatureServer/replicafilescache/Output_Areas_2021_EW_BFC_V8_-9054797207862162063.zip', dir='OA_boundaries', file='OA_2021_EW_BFC_V8.shp')
+
+  gdf = gdf[gdf['OA21CD'].isin(comparison['oa21'].drop_duplicates())]
+  gdf = gdf.to_crs(epsg=4326)
+
   m = gdf.merge(comparison, left_on='OA21CD',right_on='oa21')
   m.plot(ax=ax[1], color=comparison['colours'])
   ax[1].set_title('Output area differences')
@@ -471,8 +476,11 @@ def plot_location(connection, comparison, label):
   with_total_pop = m[['oa21', 'geometry']].merge(census[['age:total', 'geography_code']], left_on='oa21', right_on='geography_code')
   with_total_pop['value'] = with_total_pop['age:total']/with_total_pop['geometry'].area
   get_colour_percentiles(with_total_pop, 10, (0,0,1), (1,0,0), 'value')
-  m.plot(ax=ax[2], color=with_total_pop['colours'])
+  
+  if points is not None:
+    ax[1].scatter(points[:,1], points[:,0],c='white', marker='x')
 
+  m.plot(ax=ax[2], color=with_total_pop['colours'])
 
 def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None):
   X = design_func(oa_data, training)
@@ -526,8 +534,14 @@ def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, desig
     ax[1].set_title('Geographic comparison (based on percentiles)')
 
   else:
-   plot_location(connection, comparison, label) 
+   plot_location(connection, comparison, label, points=points, location=location) 
 
   return comparison
 
 
+def compare_location(connection, lad, train, nimby_df, census_oa, model, design_func=get_design_1, points=None, location=''):
+  codes = get_codes_from_lad(connection, lad=lad)
+  census_oa['oa21'] = census_oa['geography_code']
+  oa_data = join_oa_census_with_pp(connection, census_oa[census_oa['geography_code'].isin(codes)], [], all=True, year_start=2022, year_end=2024).drop('oa21', axis=1).drop_duplicates()
+  comparison = compare_pred_to_simple(connection, oa_data, train, nimby_df, model, design_func, model_title='Model 2', location=location, points=points)
+  return comparison
