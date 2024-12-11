@@ -40,8 +40,8 @@ def get_colour_outliers(df, number, cutoff, num_col, high='red', low='blue', col
   df['pos'] = pd.qcut(df[num_col].to_numpy(), number, labels=labels)
   df['neg'] = pd.qcut(-df[num_col].to_numpy(), number, labels=labels)
   df[col_name] = 'grey'
-  df.loc[comparison['pos'] >= number-cutoff[0], col_name] = 'red'
-  df.loc[comparison['neg'] >= number-cutoff[1], col_name] = 'blue'
+  df.loc[df['pos'] >= number-cutoff[0], col_name] = 'red'
+  df.loc[df['neg'] >= number-cutoff[1], col_name] = 'blue'
 
   if alpha is not None:
     df['alpha'] = alpha[0]
