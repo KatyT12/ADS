@@ -267,7 +267,7 @@ def augment_avg_price_oa(connection, df, types, codes=[], random_number=None, la
 
 
 def split_data(k, n):
-  np.random.choice(range(n), size=(n,), replace=False)
+  ind = np.random.choice(range(n), size=(n,), replace=False)
   k_sets = np.array_split(ind, k)
 
   return k_sets

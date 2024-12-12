@@ -508,6 +508,12 @@ def retrieve_electral_lad_aggregated(connection):
   result = electoral_lad_df.groupby("lad23")[['electorate','valid_votes','con','lab','ld','ruk','green']].sum().reset_index()
   return result
 
+def retrieve_normalized_lad_electoral_data(connection):
+  electoral_lad = retrieve_electral_lad_aggregated(connection)
+  merge_electoral['total'] = merge_electoral[['con', 'lab', 'ld', 'ruk', 'green']].sum(axis=1)
+  merge_electoral[['con_ratio', 'lab_ratio', 'ld_ratio', 'ruk_ratio', 'green_ratio']] = merge_electoral[['con', 'lab', 'ld', 'ruk', 'green']].div(merge_electoral['total'], axis=0)
+  return merge_electoral
+
 #----------
 
 # A generic method for plotting colours on a map of England/the UK
