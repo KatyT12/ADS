@@ -231,18 +231,6 @@ def get_addressed_buildings_data_from_geo(latitude, longitude, distance_km=2, wi
 
 
 
-def download_price_paid_data(year_from, year_to):
-        base_url = "http://prod.publicdata.landregistry.gov.uk.s3-website-eu-west-1.amazonaws.com"
-        file_name = "/pp-<year>-part<part>.csv"
-
-        for year in range(year_from, (year_to+1)):
-            print(f"Downloading data for year: {year}")
-            for part in range(1,3):
-                url = base_url + file_name.replace("<year>", str(year)).replace("<part>", str(part))
-                response = requests.get(url)
-                if response.status_code == 200:
-                    with open("." + file_name.replace("<year>", str(year)).replace("<part>", str(part)), "wb") as file:
-                        file.write(response.content)
 
 
 # Longitude and latitude convert
@@ -273,75 +261,6 @@ def get_bounding_box(latitude: float, longitude: float, distance_km: float = 1.0
   east = longitude + (distance_long/2)
   return (north, south, east, west)
 
-
-### Joins
-#############
-# Joins for the OpenStreetMap data and the normal data
-
-
-#   Join based on matching the street and address
-def exact_join(data, houses_df):
-  joined1 = pd.merge(houses_df, data, left_on=['addr:street', 'addr:housenumber'], right_on=['street', 'primary_addressable_object_name'], how='inner')
-  return joined1
-
-#   Join based on matching the street and house number + housename
-def join_house_names(data, houses_df):
-    houses_df['housename_number_combined'] = ['' if isinstance(x['addr:housename'], float) else str(x['addr:housename'].upper()) + ', ' + x['addr:housenumber'] for _,x in houses_df.iterrows()]
-    data_null_secondary = data[~data['secondary_addressable_object_name'].notnull()]
-    joined2 =  pd.merge(houses_df, data_null_secondary, left_on=['addr:street', 'housename_number_combined'], right_on=['street', 'primary_addressable_object_name'], how='inner')
-    return joined2
-
-def join(data, houses_df):
-  joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
-  return joined
-
-
-
-
-###############
-## Seperate Flat rows
-def seperate_flats_data(houses_df):
-  geo_flats = houses_df[houses_df['addr:flats'].notnull()]   # Could change this
-  chosen_flats = geo_flats[geo_flats['addr:flats'].map( lambda x: True if (re.search(r"^(\d+)-(\d+)$",x)) else False)]
-
-  chosen_flats['flat_num'] = pd.NA
-  flats_nums = chosen_flats['addr:flats'].map(lambda x: x.split('-'))
-  print(list(flats_nums))
-
-  temp = chosen_flats.copy()
-  for i,r in temp.iterrows():
-    print(flats_nums[i])
-    start = int(flats_nums[i][0])
-    end = int(flats_nums[i][1])
-    num = end - start + 1
-    for j in range(start, end+1):
-      new_row = r.copy()
-      new_row['flat_num'] = 'FLAT ' + str(j)
-      new_row['area'] = new_row['area']/num
-
-      chosen_flats.loc[len(chosen_flats)] = new_row
-
-  houses_df['flat_num'] = pd.NA
-  houses_df = pd.concat([houses_df, chosen_flats[chosen_flats['flat_num'].notnull()]])
-  return houses_df
-
-def join_on_with_flats(joined, houses_df, data):
-  flats = data[data['secondary_addressable_object_name'].map(lambda x: False if isinstance(x, float) else 'FLAT' in x) ]
-  houses_df = seperate_flats_data(houses_df)
-  houses_df['first_address'] = [ x['addr:housenumber'] if (x['housename_number_combined'] == '') else x['housename_number_combined'] for _,x in houses_df.iterrows()]
-  joined_flats =  pd.merge(houses_df, flats, left_on=['addr:street', 'first_address', 'flat_num'], right_on=['street', 'primary_addressable_object_name', 'secondary_addressable_object_name'], how='inner')
-  joined = pd.concat([joined, joined_flats])
-
-  # Sanity check
-  #data[data['date_of_transfer'].eq('1995-07-07') & data['street'].eq('bateman street')]
-
-  return joined
-
-
-def join_with_heuristics(data, houses_df):
-  joined = pd.concat([exact_join(data, houses_df), join_house_names(data, houses_df)])
-  join_on_with_flats(joined, houses_df, data)
-  return joined
 
 
 def create_credentials():
@@ -631,8 +550,4 @@ def get_census_data(area, year):
   merged_df = reduce(lambda  left, right: pd.merge(left,right,on=['geography code'],how='outer'), [age_df, composition_df, accomodation_type_df, deprivation_df, tenure_df])
   merged_df.insert(0, 'date', year + '-01-01')
   return merged_df
-
-def data():
-    """Read the data from the web or local file, returning structured format such as a data frame"""
-    raise NotImplementedError
 

@@ -196,7 +196,15 @@ def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, 
     fitted_model = model.fit()
     return fitted_model
 
-
+# For a given label, training set and output area data, fit the model and predict for the output area set, with regularisation
+def get_prediction(connection, oa_data, training, design_func, label='rag', model=None, alpha=0.00014):
+  if model is None:
+    model = fit_model_OLS(connection, training, training, label, get_design_1, augmented=training, alpha=alpha, reg_weight=1)
+  X = design_func(oa_data, training)
+  pred = model.predict(X)
+  pred_df = oa_data.copy()
+  pred_df['prediction'] = pred
+  return pred_df.drop_duplicates()
 
 # Train and then predict on training data, plot correlation
 #   :param connection - The ongoing SQL connection
@@ -439,7 +447,7 @@ def simplest_predict(connection, nimby_df, output_areas, response='rag', code_la
 #---
 
 #-------------- Comparison plots
-
+# Comparison between the simple model and given model for a given LAD location
 def plot_location(connection, comparison, label, points = None, location=''):
   fig, ax = plt.subplots(ncols=3, figsize=(18,7))
   fig.suptitle(f'{location} prediction comparison', fontsize=16)
@@ -482,6 +490,9 @@ def plot_location(connection, comparison, label, points = None, location=''):
 
   m.plot(ax=ax[2], color=with_total_pop['colours'])
 
+
+#--------------------
+# Comparison plots and calculations between the simple model and the given model
 def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None, points=None):
   X = design_func(oa_data, training)
   pred = model.predict(X)
@@ -538,6 +549,80 @@ def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, desig
 
   return comparison
 
+
+
+def aggregate_predictions(connection, oa_data, training, nimby_df, design_func, label='rag', plot=True):
+  predictions = get_prediction(connection, oa_data, training, design_func, label=label)
+  
+  # Retrieve Lad23
+  lad_mapping = retrieve_lad23_for_oa(connection, predictions['geography_code'])
+  with_lad = predictions.merge(lad_mapping, left_on='geography_code', right_on='oa21')
+  # Merge with ground truth and geo data
+  aggregated_predictions = with_lad.groupby('lad23', as_index=False)['prediction'].mean()
+  comparison = aggregated_predictions.merge(nimby_df, left_on='lad23', right_on='LAD23CD')
+  comparison['diff'] = comparison['prediction'] - comparison[label]
+
+  # Aggregate
+  if plot:
+    gdf = retrieve_map_data()
+    
+    
+    gdf_augmented = gdf.merge(comparison, left_on='LAD23CD', right_on='lad23')
+  
+    fig = plt.figure(figsize=(16, 15))
+    gs = gridspec.GridSpec(2, 3)  # 2 rows, 3 columns
+
+    # Top row (3 plots)
+    ax1 = fig.add_subplot(gs[0, 0])  # First plot
+    ax2 = fig.add_subplot(gs[0, 1])  # Second plot
+    ax3 = fig.add_subplot(gs[0, 2])  # Third plot
+    ax = [ax1, ax2, ax3]
+
+    # Bottom row (1 plot spanning all 3 columns)
+    ax4 = fig.add_subplot(gs[1, :]) 
+
+    get_colour_percentiles(gdf_augmented, 40, (1,0,0), (0,0,1), 'prediction', col_name='pred_colours')
+    get_colour_percentiles(gdf_augmented, 40, (1,0,0), (0,0,1), label, col_name='ground_colours')
+    get_colour_outliers(gdf_augmented, 10, (3,3), 'diff', low='blue', high = 'red', col_name='diff_colours')
+    
+    leg1 = [
+        mpatches.Patch(color='blue', label=f'High {label}'),
+        mpatches.Patch(color='red', label=f'Low {label}'),
+    ]
+
+    leg2 = [
+        mpatches.Patch(color='blue', label=f'Aggregated prediction lower than ground truth'),
+        mpatches.Patch(color='red', label=f'Aggregated prediction higher than ground truth'),
+    ]
+
+    
+
+    gdf_augmented.plot(color = gdf_augmented['pred_colours'], ax = ax[0])
+    ax[0].set_title(f'Aggregated prediction of {label}')
+    gdf_augmented.plot(color = gdf_augmented['ground_colours'], ax = ax[1])
+    ax[1].set_title(f'Ground truth of {label}')
+    ax[0].legend(handles=leg1)
+    ax[1].legend(handles=leg1)
+    gdf_augmented.plot(color = gdf_augmented['diff_colours'], ax = ax[2])
+    ax[2].set_title('Largest differences')
+    ax[2].legend(handles=leg2)
+
+    ax4.scatter(comparison[label],comparison['prediction'], s = 5)
+
+    # Plot differences on a graph
+    comparison['res_start'] = comparison[['prediction',label]].min(axis=1)
+    comparison['res_end'] = comparison[['prediction',label]].max(axis=1)
+
+    ax4.vlines(comparison[label], ymin=comparison['res_start'], ymax=comparison['res_end'], color='red', linestyle='dotted', label='Residual Lines', alpha=0.6)
+    
+    x = np.linspace(comparison['res_start'].min(), comparison['res_end'].max(), 10)
+    ax4.plot(x, x, color='black', alpha=0.6)
+    ax4.set_title(f'Residual plot of aggregated predicted {label} vs actual averaged {label}')
+    ax4.set_xlabel('Ground truth')
+    ax4.set_ylabel('aggregated prediction')
+  
+  corr = {'correlation':[comparison[['prediction', label]].corr()[label].iloc[0]], 'variable':label, 'avg_absolute_difference': comparison['diff'].abs().mean()}
+  return pd.DataFrame(corr)
 
 def compare_location(connection, lad, train, nimby_df, census_oa, model, design_func, points=None, location=''):
   codes = get_codes_from_lad(connection, lad=lad)
