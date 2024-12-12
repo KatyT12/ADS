@@ -200,7 +200,7 @@ def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, 
 # For a given label, training set and output area data, fit the model and predict for the output area set, with regularisation
 def get_prediction(connection, oa_data, training, design_func, label='rag', model=None, alpha=0.00014):
   if model is None:
-    model = fit_model_OLS(connection, training, training, label, get_design_1, augmented=training, alpha=alpha, reg_weight=1)
+    model = fit_model_OLS(connection, training, training, label, design_func, augmented=training, alpha=alpha, reg_weight=1)
   X = design_func(oa_data, training)
   pred = model.predict(X)
   pred_df = oa_data.copy()
