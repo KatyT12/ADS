@@ -510,9 +510,9 @@ def retrieve_electral_lad_aggregated(connection):
 
 def retrieve_normalized_lad_electoral_data(connection):
   electoral_lad = retrieve_electral_lad_aggregated(connection)
-  merge_electoral['total'] = merge_electoral[['con', 'lab', 'ld', 'ruk', 'green']].sum(axis=1)
-  merge_electoral[['con_ratio', 'lab_ratio', 'ld_ratio', 'ruk_ratio', 'green_ratio']] = merge_electoral[['con', 'lab', 'ld', 'ruk', 'green']].div(merge_electoral['total'], axis=0)
-  return merge_electoral
+  electoral_lad['total'] = electoral_lad[['con', 'lab', 'ld', 'ruk', 'green']].sum(axis=1)
+  electoral_lad[['con_ratio', 'lab_ratio', 'ld_ratio', 'ruk_ratio', 'green_ratio']] = electoral_lad[['con', 'lab', 'ld', 'ruk', 'green']].div(merge_electoral['total'], axis=0)
+  return electoral_lad
 
 #----------
 
