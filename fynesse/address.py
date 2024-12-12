@@ -19,6 +19,7 @@ from .assess import *
 from .access import *
 from .util import *
 from sklearn.metrics import r2_score
+import matplotlib.gridspec as gridspec
 import statsmodels.api as sm
 
 # To be used for both training and prediction of student proportions
