@@ -701,7 +701,7 @@ def plot_correlation_prediction_comparison(connection, oa_data, training, design
   for x in x_positions:
     ax.axvline(x=x,linestyle='--', color='grey', alpha=0.2)
 
-  for (m,c),l in zip(zip([m1,m2], ['blue', 'red']), labs):
+  for (m,c),l in zip(zip([m1,m2], ['blue', 'red']), model_names):
     ax.scatter(x_positions[:len(m.index)], m['correlation'], color=c, alpha=0.4)
     ax.vlines(x_positions[:len(m.index)], ymin=m[['correlation','training_correlation']].min(axis=1), ymax=m[['correlation','training_correlation']].max(axis=1), color=c, alpha=0.4, label=l)
 
