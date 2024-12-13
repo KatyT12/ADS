@@ -514,6 +514,16 @@ def retrieve_normalized_lad_electoral_data(connection):
   electoral_lad[['con_ratio', 'lab_ratio', 'ld_ratio', 'ruk_ratio', 'green_ratio']] = electoral_lad[['con', 'lab', 'ld', 'ruk', 'green']].div(electoral_lad['total'], axis=0)
   return electoral_lad
 
+def augment_with_electoral(connection, census, code_string = 'geography_code'):
+  oa_string = ', '.join(["'" + s + "'" for s in census[code_string]])
+  query = f'''
+  select ed.*, co.oa21 from electoral_data as ed join cons_to_oa_data as co on ed.ons_id = co.pcon25 where co.oa21 in ({oa_string});
+  '''
+  mappings = query_to_dataframe(connection, query)
+  mappings[mappings.columns[mappings.columns.str.contains('ratio')]] = mappings[mappings.columns[mappings.columns.str.contains('ratio')]].astype(float)
+
+  return census.merge(mappings, left_on=code_string, right_on = 'oa21')
+
 #----------
 
 # A generic method for plotting colours on a map of England/the UK

@@ -178,7 +178,6 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
   merged = training.merge(nimby_df[['LAD23CD',*cols]], left_on='geography_code', right_on='LAD23CD')
   return merged[merged['geography_code'].str.contains('E')]
 
-def fit_model_with_design()
 
 def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, alpha=None, reg_weight=0):
   if augmented is None:
