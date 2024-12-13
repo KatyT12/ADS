@@ -654,7 +654,7 @@ def compare_feature_correlations_from_prediction(connection, oa_data, training, 
   design_ltla = design_func(training, training)
   design_oa = design_func(oa_data, training)
 
-  regularised_rag_model = fit_model_OLS(connection, training, training, 'rag', get_design_2, augmented=training, alpha=0.00014, reg_weight=1)
+  regularised_rag_model = fit_model_OLS(connection, training, training, 'rag', design_func, augmented=training, alpha=0.00014, reg_weight=1)
   params = regularised_rag_model.params.to_frame().T
   
   for c in design_ltla.columns:
