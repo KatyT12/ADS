@@ -178,6 +178,7 @@ def augment_training(training, nimby_df,cols=['rag', 'avg_rag_flats', 'avg_rag_h
   merged = training.merge(nimby_df[['LAD23CD',*cols]], left_on='geography_code', right_on='LAD23CD')
   return merged[merged['geography_code'].str.contains('E')]
 
+def fit_model_with_design()
 
 def fit_model_OLS(connection, training, actual, t, design_func, augmented=None, alpha=None, reg_weight=0):
   if augmented is None:
@@ -492,6 +493,20 @@ def plot_location(connection, comparison, label, points = None, location=''):
   m.plot(ax=ax[2], color=with_total_pop['colours'])
 
 
+#------------- General comparison
+def compare_models(connection, train1, train2, design1, design2, cols = ['rag', 'avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']):
+  results = []
+  # Try both models
+  cols = ['rag', 'avg_rag_flats', 'avg_rag_housing', 'avg_rag_estate']
+  for c in cols:
+    results.append(get_k_folded_results(connection, 12, train1, c, design1).mean(axis=0).to_frame().T)
+    results.append(get_k_folded_results(connection, 12, train2, c, design2).mean(axis=0).to_frame().T)
+    
+  # Compare results
+  ret = pd.concat(results).set_index(pd.Index(['Model 1', 'Model 2']*len(cols)))
+  ret['variable'] = cols + cols
+  return ret
+
 #--------------------
 # Comparison plots and calculations between the simple model and the given model
 def compare_pred_to_simple(connection, oa_data, training, nimby_df, model, design_func, model_title='Given model', label='rag', location=None, points=None):
@@ -631,3 +646,66 @@ def compare_location(connection, lad, train, nimby_df, census_oa, model, design_
   oa_data = join_oa_census_with_pp(connection, census_oa[census_oa['geography_code'].isin(codes)], [], all=True, year_start=2022, year_end=2024).drop('oa21', axis=1).drop_duplicates()
   comparison = compare_pred_to_simple(connection, oa_data, train, nimby_df, model, design_func, model_title='Model 2', location=location, points=points)
   return comparison
+
+
+#------------------------ Assessing model methods
+
+def compare_feature_correlations_from_prediction(connection, oa_data, training, design_func, model_name = 'Model 1', label='rag', alpha=0.00014):
+  
+  design_ltla = design_func(training, training)
+  design_oa = design_func(oa_data, training)
+
+  regularised_rag_model = fit_model_OLS(connection, training, training, 'rag', get_design_2, augmented=training, alpha=0.00014, reg_weight=1)
+  params = regularised_rag_model.params.to_frame().T
+  
+  for c in design_ltla.columns:
+    if params[c].iloc[0] == 0:
+      design_ltla = design_ltla.drop(c, axis=1)  
+      design_oa = design_oa.drop(c, axis=1)  
+  
+  correlations = []
+  for i in range(1,len(design_ltla.columns)):
+    col = design_ltla.columns[i]
+    # Make predictions
+    design_ltla_temp = design_ltla.drop(col, axis=1)
+    design_oa_temp = design_oa.drop(col, axis=1)
+    
+    # Train
+    model = sm.OLS(training[label], design_ltla_temp)
+    fitted_model = model.fit_regularized(alpha=alpha, L1_wt=1)
+    
+    # Retrieve OA predictions
+    predictions = fitted_model.predict(design_oa_temp)
+    design_oa_temp['prediction'] = predictions
+
+    # Use the predictions to predict the missing feature
+    correlations.append(pd.DataFrame({'feature': [col], 'correlation': [np.corrcoef(predictions, design_oa[col])[0][1]], 'training_correlation': [np.corrcoef(design_ltla[col], training[label])[0][1]], 'model': model_name}))
+    
+  return pd.concat(correlations)
+
+
+def plot_correlation_prediction_comparison(connection, oa_data, training, design_func1, design_func2, model_names):
+  df = pd.concat(
+    [compare_feature_correlations_from_prediction(connection, oa_data, training, design_func=design_func1, model_name=model_names[0]),
+    compare_feature_correlations_from_prediction(connection, oa_data, training, design_func=design_func2, model_name =model_names[1])
+    ])
+  
+  fig, ax = plt.subplots()
+  x_positions = np.arange(len(df['feature'].drop_duplicates()))
+
+  m1 = df[df['model'] == model_names[0]]
+  m2 = df[df['model'] == model_names[1]]
+
+  ax.scatter(x_positions, m1['training_correlation'], color='black')
+
+  ax.axhline(y=0, linestyle='--', color='black')
+  for x in x_positions:
+    ax.axvline(x=x,linestyle='--', color='grey', alpha=0.2)
+
+  for (m,c),l in zip(zip([m1,m2], ['blue', 'red']), labs):
+    ax.scatter(x_positions[:len(m.index)], m['correlation'], color=c, alpha=0.4)
+    ax.vlines(x_positions[:len(m.index)], ymin=m[['correlation','training_correlation']].min(axis=1), ymax=m[['correlation','training_correlation']].max(axis=1), color=c, alpha=0.4, label=l)
+
+  ax.legend()
+  ax.set_xticks(x_positions)
+  ax.set_xticklabels(df['feature'].drop_duplicates(), rotation=45)
