@@ -649,12 +649,12 @@ def compare_location(connection, lad, train, nimby_df, census_oa, model, design_
 
 #------------------------ Assessing model methods
 
-def compare_feature_correlations_from_prediction(connection, oa_data, training, design_func, model_name = 'Model 1', label='rag', alpha=0.00014):
+def compare_feature_correlations_from_prediction(connection, oa_data, training, default_design, design_func, model_name = 'Model 1', label='rag', alpha=0.00014):
   
   design_ltla = design_func(training, training)
   design_oa = design_func(oa_data, training)
 
-  regularised_rag_model = fit_model_OLS(connection, training, training, 'rag', design_func, augmented=training, alpha=0.00014, reg_weight=1)
+  regularised_rag_model = fit_model_OLS(connection, training, training, 'rag', default_design, augmented=training, alpha=0.00014, reg_weight=1)
   params = regularised_rag_model.params.to_frame().T
   
   for c in design_ltla.columns:
@@ -685,8 +685,8 @@ def compare_feature_correlations_from_prediction(connection, oa_data, training, 
 
 def plot_correlation_prediction_comparison(connection, oa_data, training, design_func1, design_func2, model_names):
   df = pd.concat(
-    [compare_feature_correlations_from_prediction(connection, oa_data, training, design_func=design_func1, model_name=model_names[0]),
-    compare_feature_correlations_from_prediction(connection, oa_data, training, design_func=design_func2, model_name =model_names[1])
+    [compare_feature_correlations_from_prediction(connection, oa_data, training, default_design=design_func1, design_func=design_func1, model_name=model_names[0]),
+    compare_feature_correlations_from_prediction(connection, oa_data, training, default_design=design_func1, design_func=design_func2, model_name =model_names[1])
     ])
   
   fig, ax = plt.subplots()
